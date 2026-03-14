@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Playwright
+debug_*.png
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# IDEs
+.vscode/
+.idea/
+
+# Conductor
+# Keep the conductor folder for project context, but maybe ignore track plan results if they get large
+# conductor/tracks/

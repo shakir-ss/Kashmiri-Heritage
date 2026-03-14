@@ -1,0 +1,1 @@
+web: gunicorn kashmiri-dry-fruits.backend.app:app
