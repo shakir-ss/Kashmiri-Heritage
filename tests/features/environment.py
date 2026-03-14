@@ -23,6 +23,8 @@ def before_scenario(context, scenario):
     if "ui" in scenario.tags:
         context.browser_context = context.browser.new_context()
         context.page = context.browser_context.new_page()
+        # Enable console logging
+        context.page.on("console", lambda msg: print(f"BROWSER CONSOLE: {msg.text}"))
 
 def after_scenario(context, scenario):
     # Close browser context after each UI scenario

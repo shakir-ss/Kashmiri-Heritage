@@ -57,8 +57,16 @@ def place_order(current_user):
     
     db.session.commit()
 
-    # Trigger WhatsApp (Async ideally, but sync for now)
-    MessagingService.send_order_confirmation(new_order.phone, new_order.id, total_amount)
+    # Trigger WhatsApp (Async via threading)
+    import threading
+    def notify():
+        try:
+            with current_app.app_context():
+                MessagingService.send_order_confirmation(new_order.phone, new_order.id, total_amount)
+        except Exception as e:
+            print(f"Async WhatsApp notification failed: {e}")
+    
+    threading.Thread(target=notify).start()
 
     return jsonify({
         'message': 'Order placed successfully',

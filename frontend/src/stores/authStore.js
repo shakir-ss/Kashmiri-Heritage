@@ -15,6 +15,11 @@ export const useAuthStore = defineStore('auth', {
   },
   
   actions: {
+    init() {
+      if (this.token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+      }
+    },
     async login(email, password) {
       this.loading = true
       this.error = null

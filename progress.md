@@ -48,6 +48,9 @@
 - [x] Bug Fix: Vite proxy URL rewrite configuration
 - [x] BDD Test Suite Design with Behave & Playwright
 - [x] @api and @ui Authentication smoke tests passing
+- [x] Full Regression Test Pack (16 scenarios) implemented and passing
+- [x] Feature implementation: Orders History View
+- [x] Stability: Async WhatsApp notifications and defensive API checks
 
-## CURRENT STATUS: **STABILIZING**
-*Core e-commerce modules are functional and verified through BDD tests.*
+## CURRENT STATUS: **STABLE**
+*Core e-commerce modules are fully functional, verified through a comprehensive BDD regression suite.*

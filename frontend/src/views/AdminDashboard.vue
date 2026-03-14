@@ -95,27 +95,27 @@
         <h2>{{ editingId ? 'Edit Product' : 'Add New Product' }}</h2>
         <form @submit.prevent="saveProduct" class="modal-form">
           <div class="form-group">
-            <label>Product Name</label>
-            <input v-model="form.name" required />
+            <label for="prod-name">Product Name</label>
+            <input id="prod-name" v-model="form.name" required />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Price (₹)</label>
-              <input v-model.number="form.price" type="number" required />
+              <label for="prod-price">Price (₹)</label>
+              <input id="prod-price" v-model.number="form.price" type="number" required />
             </div>
             <div class="form-group">
-              <label>Discount Price (Optional)</label>
-              <input v-model.number="form.discount_price" type="number" />
+              <label for="prod-discount">Discount Price (Optional)</label>
+              <input id="prod-discount" v-model.number="form.discount_price" type="number" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Stock</label>
-              <input v-model.number="form.stock" type="number" required />
+              <label for="prod-stock">Stock</label>
+              <input id="prod-stock" v-model.number="form.stock" type="number" required />
             </div>
             <div class="form-group">
-              <label>Category</label>
-              <select v-model="form.category_id" required>
+              <label for="prod-category">Category</label>
+              <select id="prod-category" v-model="form.category_id" required>
                 <option v-for="cat in productStore.categories" :key="cat.id" :value="cat.id">
                   {{ cat.name }}
                 </option>
@@ -123,8 +123,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Description</label>
-            <textarea v-model="form.description"></textarea>
+            <label for="prod-desc">Description</label>
+            <textarea id="prod-desc" v-model="form.description"></textarea>
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-outline">Cancel</button>

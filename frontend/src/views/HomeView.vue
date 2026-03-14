@@ -17,13 +17,18 @@
       <section class="placeholder-section">
         <h3>Our Favorites</h3>
         <div class="product-grid">
-          <!-- Sample Product Card -->
-          <div class="product-card" v-for="i in 3" :key="i">
-            <div class="product-image"></div>
+          <!-- Real Product Card -->
+          <div class="product-card" v-for="product in productStore.products.slice(0, 3)" :key="product.id">
+            <div class="product-image">
+              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" />
+            </div>
             <div class="product-info">
-              <h4>Kashmiri Mamra Almonds</h4>
-              <p class="price">₹1,200 <span class="old-price">₹1,500</span></p>
-              <button class="btn btn-secondary btn-sm">Add to Cart</button>
+              <h4>{{ product.name }}</h4>
+              <p class="price">
+                ₹{{ product.price }} 
+                <span v-if="product.discount_price" class="old-price">₹{{ product.discount_price }}</span>
+              </p>
+              <button @click="addToCart(product)" class="btn btn-secondary btn-sm">Add to Cart</button>
             </div>
           </div>
         </div>
@@ -31,6 +36,23 @@
     </main>
   </div>
 </template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useProductStore } from '../stores/productStore'
+import { useCartStore } from '../stores/cartStore'
+
+const productStore = useProductStore()
+const cartStore = useCartStore()
+
+onMounted(() => {
+  productStore.fetchProducts()
+})
+
+const addToCart = (product) => {
+  cartStore.addItem(product)
+}
+</script>
 
 <style scoped>
 .hero {

@@ -92,6 +92,7 @@ const handleCheckout = async () => {
     cartStore.clearCart()
     
   } catch (err) {
+    console.error('Checkout error:', err.response?.data || err.message)
     alert(err.response?.data?.message || 'Failed to place order')
   } finally {
     loading.value = false

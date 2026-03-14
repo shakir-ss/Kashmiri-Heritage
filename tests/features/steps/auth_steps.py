@@ -11,8 +11,13 @@ def step_impl(context):
     response = context.api_session.get(url)
     assert response.status_code == 200, f"Expected 200 but got {response.status_code}. URL: {url}"
 
+import random
+
 @when('I register a new user with name "{name}", email "{email}", and password "{password}"')
 def step_impl(context, name, email, password):
+    # Make email unique for the test run
+    if "newuser@example.com" in email:
+        email = f"user_{random.randint(10000, 99999)}@example.com"
     payload = {
         "name": name,
         "email": email,
@@ -22,11 +27,11 @@ def step_impl(context, name, email, password):
 
 @then('the API should return a success message "{message}"')
 def step_impl(context, message):
-    assert context.response.json().get('message') == message
-
-@then('the status code should be {status_code:d}')
-def step_impl(context, status_code):
-    assert context.response.status_code == status_code
+    try:
+        data = context.response.json()
+    except Exception as e:
+        assert False, f"Failed to decode JSON response. Status: {context.response.status_code}. Response text: {context.response.text}"
+    assert data.get('message') == message
 
 @given('I have a registered user with email "{email}" and password "{password}"')
 def step_impl(context, email, password):

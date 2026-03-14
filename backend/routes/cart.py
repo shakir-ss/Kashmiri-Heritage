@@ -24,6 +24,11 @@ def add_to_cart(current_user):
     product_id = data.get('product_id')
     quantity = data.get('quantity', 1)
 
+    # Explicit check for product existence
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Product not found'}), 404
+
     item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
     if item:
         item.quantity += quantity
