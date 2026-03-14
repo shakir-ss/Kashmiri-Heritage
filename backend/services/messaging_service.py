@@ -5,11 +5,18 @@ class MessagingService:
     @staticmethod
     def send_order_confirmation(to_phone, order_id, total_amount):
         """
-        Sends a WhatsApp confirmation to the customer.
-        Note: Requires Twilio WhatsApp Sandbox/Approved Profile.
+        Sends notifications to customer and admin.
         """
+        # --- ADMIN ALERT ---
+        print("\n" + "="*50)
+        print(f"🚨 ADMIN ALERT: NEW ORDER PLACED! 🚨")
+        print(f"Order ID: #{order_id}")
+        print(f"Amount:   ₹{total_amount}")
+        print(f"Customer: {to_phone}")
+        print("="*50 + "\n")
+
         try:
-            account_sid = current_app.config['TWILIO_ACCOUNT_SID']
+            account_sid = current_app.config.get('TWILIO_ACCOUNT_SID')
             auth_token = current_app.config['TWILIO_AUTH_TOKEN']
             from_phone = current_app.config['TWILIO_PHONE_NUMBER'] # e.g. 'whatsapp:+14155238886'
 

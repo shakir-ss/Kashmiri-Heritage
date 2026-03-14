@@ -54,6 +54,7 @@ def get_products():
         'name': p.name,
         'slug': p.slug,
         'description': p.description,
+        'details': p.details,
         'price': p.price,
         'discount_price': p.discount_price,
         'stock': p.stock,
@@ -69,6 +70,7 @@ def get_product(id):
         'name': product.name,
         'slug': product.slug,
         'description': product.description,
+        'details': product.details,
         'price': product.price,
         'discount_price': product.discount_price,
         'stock': product.stock,
@@ -85,6 +87,7 @@ def create_product(current_user):
         name=data.get('name'),
         slug=data.get('slug') or data.get('name').lower().replace(' ', '-'),
         description=data.get('description'),
+        details=data.get('details'),
         price=data.get('price'),
         discount_price=data.get('discount_price'),
         stock=data.get('stock', 0),
@@ -107,7 +110,10 @@ def update_product(current_user, id):
     product.discount_price = data.get('discount_price', product.discount_price)
     product.stock = data.get('stock', product.stock)
     product.description = data.get('description', product.description)
+    product.details = data.get('details', product.details)
     product.is_active = data.get('is_active', product.is_active)
+    product.image_url = data.get('image_url', product.image_url)
+    product.category_id = data.get('category_id', product.category_id)
     
     db.session.commit()
     return jsonify({'message': 'Product updated successfully'})

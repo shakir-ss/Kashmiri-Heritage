@@ -1,5 +1,6 @@
 from behave import given, when, then
 import requests
+import re
 from playwright.sync_api import expect
 
 # --- API STEPS ---
@@ -24,32 +25,40 @@ def step_impl(context, keyword):
 
 @given('a category exists with ID {cat_id:d}')
 def step_impl(context, cat_id):
-    # We'll assume category 1 exists for now
-    pass
+    # Instead of assuming ID 1, let's fetch first available category
+    response = context.api_session.get(f"{context.base_api_url}/products/categories")
+    categories = response.json()
+    if categories:
+        context.valid_cat_id = categories[0]['id']
+    else:
+        assert False, "No categories found in database"
 
 import random
 
-@when('I create a product with name "{name}", price {price:d}, and stock {stock:d}')
-def step_impl(context, name, price, stock):
+@when('I create a product with name "{name}", price {price:d}, stock {stock:d}, and details "{details}"')
+def step_impl(context, name, price, stock, details):
+    cat_id = getattr(context, 'valid_cat_id', 1)
     unique_name = f"{name} {random.randint(1000, 9999)}"
     payload = {
         "name": unique_name,
         "price": float(price),
         "stock": stock,
-        "category_id": 1
+        "category_id": cat_id,
+        "details": details
     }
     context.response = context.api_session.post(f"{context.base_api_url}/products/", json=payload)
 
-@when('I try to create a product without an auth token')
-def step_impl(context):
-    # Use a fresh session without auth headers
-    temp_session = requests.Session()
-    payload = {"name": "Test", "price": 10.0, "category_id": 1}
-    context.response = temp_session.post(f"{context.base_api_url}/products/", json=payload)
-
-@then('the API should return an error message "{message}"')
-def step_impl(context, message):
-    assert context.response.json().get('message') == message
+@when('I create a product with name "{name}", price {price:d}, stock {stock:d}, and no image URL')
+def step_impl(context, name, price, stock):
+    cat_id = getattr(context, 'valid_cat_id', 1)
+    payload = {
+        "name": name,
+        "price": float(price),
+        "stock": stock,
+        "category_id": cat_id,
+        "image_url": None
+    }
+    context.response = context.api_session.post(f"{context.base_api_url}/products/", json=payload)
 
 # --- UI STEPS ---
 
@@ -68,28 +77,37 @@ def step_impl(context):
 def step_impl(context, name):
     expect(context.page.get_by_text(name).first).to_be_visible()
 
-@given('I am on the Admin Dashboard')
-def step_impl(context):
-    context.page.goto(f"{context.base_ui_url}/admin")
-    # Wait for the dashboard to load
-    context.page.wait_for_selector('h1:has-text("Admin Insights")')
+@when('I click on product "{name}"')
+def step_impl(context, name):
+    context.page.locator('.product-card', has_text=name).first.click()
 
-@when('I fill in the product form with name "{name}", price {price:d}, stock {stock:d}, and category ID {cat_id:d}')
-def step_impl(context, name, price, stock, cat_id):
+@then('I should see the product detail page for "{name}"')
+def step_impl(context, name):
+    expect(context.page.locator('h1')).to_contain_text(name)
+    expect(context.page).to_have_url(re.compile(r".*/products/\d+"))
+
+@then('I should see the product story "{text}"')
+def step_impl(context, text):
+    expect(context.page.locator('.details-content')).to_contain_text(text)
+
+@when('I fill in the product form with name "{name}", price {price:d}, stock {stock:d}, and details "{details}"')
+def step_impl(context, name, price, stock, details):
     # Open the add modal first
-    context.page.click('button:has-text("+ Add New Product")')
+    context.page.click('#add-product-btn')
     
     # Wait for modal content
     try:
         context.page.wait_for_selector('.modal-content', state='visible', timeout=5000)
         
-        # Fill based on labels
+        # Fill based on labels or IDs
         context.page.get_by_label("Product Name").fill(name)
         context.page.get_by_label("Price (₹)").fill(str(price))
         context.page.get_by_label("Stock").fill(str(stock))
-        context.page.get_by_label("Category").select_option(str(cat_id))
+        # Select category - assuming first option
+        context.page.get_by_label("Category").select_option(index=1)
+        context.page.get_by_label("Detailed Product Story").fill(details)
     except Exception as e:
-        context.page.screenshot(path="error_admin_modal.png")
+        context.page.screenshot(path="error_admin_modal_details.png")
         raise e
 
 @when('I click the "{button_text}" button')

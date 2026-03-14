@@ -1,39 +1,64 @@
 <template>
-  <div>
+  <div class="home-wrapper">
     <!-- Hero Section -->
     <header class="hero">
+      <div class="hero-overlay"></div>
       <div class="container hero-content">
-        <h2>Premium. Organic. Authentic.</h2>
-        <p>Bringing the finest flavors of the Valley straight to your doorstep.</p>
+        <div class="hero-badge">Authentic & Handcrafted</div>
+        <h1>Bringing the Heart of <span>Kashmir</span> to Your Home</h1>
+        <p>Premium dry fruits, exquisite Pashminas, and timeless handicrafts sourced directly from the valleys of Kashmir.</p>
         <div class="hero-actions">
-          <button class="btn btn-secondary">Shop Dry Fruits</button>
-          <button class="btn btn-outline">Explore Shawls</button>
+          <router-link to="/products" class="btn btn-secondary">Shop Collection</router-link>
+          <a href="#featured" class="btn btn-outline-white">Explore Crafts</a>
         </div>
       </div>
     </header>
 
-    <!-- Content -->
-    <main class="container main-content">
-      <section class="placeholder-section">
-        <h3>Our Favorites</h3>
+    <!-- Categories Section -->
+    <section id="featured" class="categories-section container">
+      <div class="section-header">
+        <h2>Curated Collections</h2>
+        <p>Discover the finest artisanal treasures from the Valley</p>
+      </div>
+      
+      <div class="category-grid">
+        <div class="category-card" v-for="cat in categories" :key="cat.name">
+          <div class="cat-image" :style="{ backgroundImage: `url(${cat.image})` }"></div>
+          <div class="cat-info">
+            <h3>{{ cat.name }}</h3>
+            <router-link :to="{ name: 'products', query: { category: cat.id } }" class="btn-link">View All →</router-link>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Best Sellers -->
+    <section class="featured-products kashmiri-pattern">
+      <div class="container">
+        <div class="section-header">
+          <h2>Premium Best Sellers</h2>
+          <router-link to="/products" class="btn-link">View All Collection →</router-link>
+        </div>
+        
         <div class="product-grid">
-          <!-- Real Product Card -->
-          <div class="product-card" v-for="product in productStore.products.slice(0, 3)" :key="product.id">
+          <div class="product-card" v-for="product in productStore.products.slice(0, 4)" :key="product.id">
             <div class="product-image">
-              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" />
+              <img :src="product.image_url || 'https://via.placeholder.com/300x400'" :alt="product.name" />
+              <div class="product-badge" v-if="product.stock > 0">In Stock</div>
             </div>
             <div class="product-info">
+              <span class="category-tag">Kashmiri Specialty</span>
               <h4>{{ product.name }}</h4>
-              <p class="price">
-                ₹{{ product.price }} 
+              <div class="price-row">
+                <span class="price">₹{{ product.price }}</span>
                 <span v-if="product.discount_price" class="old-price">₹{{ product.discount_price }}</span>
-              </p>
-              <button @click="addToCart(product)" class="btn btn-secondary btn-sm">Add to Cart</button>
+              </div>
+              <button @click="addToCart(product)" class="btn btn-primary btn-sm btn-block">Add to Cart</button>
             </div>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -44,6 +69,14 @@ import { useCartStore } from '../stores/cartStore'
 
 const productStore = useProductStore()
 const cartStore = useCartStore()
+
+const b64_img = (color_hex) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23${color_hex}'/%3E%3C/svg%3E`
+
+const categories = [
+  { id: 1, name: 'Premium Dry Fruits', image: b64_img('4a2c2a') },
+  { id: 2, name: 'Pashmina & Kani', image: b64_img('2d5a27') },
+  { id: 3, name: 'Artistic Papier Mâché', image: b64_img('d4af37') }
+]
 
 onMounted(() => {
   productStore.fetchProducts()
@@ -56,100 +89,219 @@ const addToCart = (product) => {
 
 <style scoped>
 .hero {
-  background: linear-gradient(rgba(139, 69, 19, 0.4), rgba(139, 69, 19, 0.6)), 
-              url('https://images.unsplash.com/photo-1596515101107-111d4d386b1f?q=80&w=2070&auto=format&fit=crop');
+  height: 90vh;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'%3E%3Crect width='1920' height='1080' fill='%234a2c2a'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='80' font-family='serif' text-anchor='middle'%3E%3C/text%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
-  height: 500px;
+  position: relative;
   display: flex;
   align-items: center;
   color: white;
-  text-align: center;
+  margin-top: -80px; /* Offset for transparent navbar if needed */
 }
 
-.hero-content h2 {
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
 }
 
-.hero-content p {
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: var(--secondary);
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  font-size: 4.5rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 span {
+  color: var(--secondary);
+}
+
+.hero p {
   font-size: 1.25rem;
-  margin-bottom: 2rem;
-  max-width: 600px;
-  margin-inline: auto;
+  margin-bottom: 2.5rem;
+  opacity: 0.9;
+  font-weight: 300;
 }
 
 .hero-actions {
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  gap: 1.5rem;
 }
 
-.btn-outline {
+.btn-outline-white {
   background: transparent;
   border: 2px solid white;
   color: white;
 }
 
-.main-content {
-  padding: 4rem 0;
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
 }
 
-.placeholder-section h3 {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 3rem;
+.section-header h2 {
+  font-size: 2.5rem;
   color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.categories-section {
+  padding: 8rem 0;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.category-card {
+  position: relative;
+  height: 450px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.cat-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.6s ease;
+}
+
+.category-card:hover .cat-image {
+  transform: scale(1.1);
+}
+
+.cat-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 2rem;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white;
+}
+
+.cat-info h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.featured-products {
+  padding: 8rem 0;
+  background-color: #f9f6f2;
 }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
 }
 
 .product-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--shadow);
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
+  transition: all 0.3s ease;
 }
 
 .product-image {
-  height: 200px;
-  background: #eee;
+  height: 350px;
+  position: relative;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+.product-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255,255,255,0.9);
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .product-info {
   padding: 1.5rem;
 }
 
+.category-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--secondary);
+  letter-spacing: 1px;
+}
+
 .product-info h4 {
-  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  margin: 0.5rem 0;
   color: var(--primary);
 }
 
+.price-row {
+  margin-bottom: 1.5rem;
+}
+
 .price {
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 1rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--text-dark);
 }
 
 .old-price {
   text-decoration: line-through;
   color: #999;
   font-size: 0.9rem;
-  margin-left: 0.5rem;
+  margin-left: 0.75rem;
 }
 
-.btn-sm {
-  padding: 0.5rem 1rem;
+.btn-link {
+  color: var(--secondary);
+  text-decoration: none;
+  font-weight: 700;
   font-size: 0.9rem;
+}
+
+.btn-block {
   width: 100%;
 }
 </style>

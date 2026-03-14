@@ -25,5 +25,6 @@ A premium, scalable, and high-performance e-commerce platform specializing in Ka
 
 ## Workflows
 - Always use TDD (Test-Driven Development) for new features.
+- Whenever creating a new feature, always add or append relevant BDD test cases (Gherkin/Behave) to the test suite in `tests/features/` to validate the feature's behavioral correctness across API and UI layers.
 - Ensure all API endpoints are tested with `Invoke-RestMethod` (PowerShell).
 - Maintain clean code following the standards in `conductor/code_styleguides/`.

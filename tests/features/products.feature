@@ -17,10 +17,17 @@ Feature: Product Management
         And the status code should be 200
 
     @api @smoke @positive
-    Scenario: Create a new product as admin via API
+    Scenario: Create a new product as admin with full details via API
         Given I am logged in as admin via API
         And a category exists with ID 1
-        When I create a product with name "Walnut Kernels", price 1500, and stock 50
+        When I create a product with name "Saffron Honey", price 800, stock 30, and details "Pure honey infused with Pampore saffron"
+        Then the API should return a success message "Product created successfully"
+        And the status code should be 201
+
+    @api @regression @positive
+    Scenario: Create product without image via API
+        Given I am logged in as admin via API
+        When I create a product with name "No Image Item", price 100, stock 10, and no image URL
         Then the API should return a success message "Product created successfully"
         And the status code should be 201
 
@@ -35,12 +42,19 @@ Feature: Product Management
     Scenario: Browse product list via UI
         Given I am on the Products page
         Then I should see a list of products
-        And I should see product "Mamra Almonds"
+        And I should see product "Premium Mamra Almonds"
+
+    @ui @smoke @positive
+    Scenario: View product detail page
+        Given I am on the Products page
+        When I click on product "Premium Mamra Almonds"
+        Then I should see the product detail page for "Premium Mamra Almonds"
+        And I should see the product story "Our Mamra Almonds are sourced"
 
     @ui @regression @positive
-    Scenario: Admin adds product via Dashboard
+    Scenario: Admin adds product with detailed story via Dashboard
         Given I am logged in as admin on the UI
         And I am on the Admin Dashboard
-        When I fill in the product form with name "Saffron 1g", price 450, stock 20, and category ID 1
+        When I fill in the product form with name "Craft Box", price 2000, stock 5, and details "Hand-painted by local artisans"
         And I click the "Save Product" button
-        Then I should see the product "Saffron 1g" in the product list
+        Then I should see the product "Craft Box" in the product list

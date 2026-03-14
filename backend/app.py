@@ -18,13 +18,14 @@ def create_app(config_name):
     from routes.cart import cart_bp
     from routes.orders import orders_bp
     from routes.analytics import analytics_bp
-    
+    from routes.wishlist import wishlist_bp
+
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(products_bp, url_prefix='/api/products')
     app.register_blueprint(cart_bp, url_prefix='/api/cart')
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
-
+    app.register_blueprint(wishlist_bp, url_prefix='/api/wishlist')
     @app.route('/health', methods=['GET'])
     def health_check():
         return jsonify({"status": "healthy", "service": "Kashmiri Dry Fruits API"}), 200

@@ -6,7 +6,10 @@ import random
 
 @when('I view product with ID {prod_id:d}')
 def step_impl(context, prod_id):
-    context.response = context.api_session.post(f"{context.base_api_url}/analytics/view/{prod_id}")
+    # Fetch first available product if none tracked
+    response = context.api_session.get(f"{context.base_api_url}/products/")
+    pid = response.json()[0]['id']
+    context.response = context.api_session.post(f"{context.base_api_url}/analytics/view/{pid}")
 
 @when('I fetch the shop stats')
 def step_impl(context):

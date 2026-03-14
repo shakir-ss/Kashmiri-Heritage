@@ -19,13 +19,26 @@ export const useProductStore = defineStore('products', {
       }
     },
 
-    async fetchProducts(params = {}) {
+    async fetchProducts(query = {}) {
       this.loading = true
       try {
-        const res = await axios.get('/api/products/', { params })
+        const res = await axios.get('/api/products/', { params: query })
         this.products = res.data
       } catch (err) {
         this.error = 'Failed to fetch products'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchProductById(id) {
+      this.loading = true
+      try {
+        const res = await axios.get(`/api/products/${id}`)
+        return res.data
+      } catch (err) {
+        this.error = 'Failed to fetch product details'
+        return null
       } finally {
         this.loading = false
       }

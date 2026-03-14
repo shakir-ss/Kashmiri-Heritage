@@ -45,6 +45,16 @@ class Product(db.Model):
     image_url = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    details = db.Column(db.Text) # Rich details about the product
+
+class WishlistItem(db.Model):
+    __tablename__ = 'wishlist_items'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    product = db.relationship('Product')
 
 class Order(db.Model):
     __tablename__ = 'orders'

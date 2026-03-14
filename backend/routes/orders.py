@@ -1,9 +1,30 @@
-from flask import Blueprint, request, jsonify
-from models import db, Order, OrderItem, CartItem, Product
-from .auth import token_required
+from flask import Blueprint, request, jsonify, current_app
+from models import db, Order, OrderItem, CartItem, Product, User
+from .auth import token_required, admin_required
 from services.messaging_service import MessagingService
 
 orders_bp = Blueprint('orders', __name__)
+
+@orders_bp.route('/admin', methods=['GET'])
+@token_required
+@admin_required
+def admin_get_all_orders(current_user):
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    return jsonify([{
+        'id': o.id,
+        'customer_name': o.user.name,
+        'customer_email': o.user.email,
+        'total_amount': o.total_amount,
+        'status': o.status,
+        'address': o.address,
+        'phone': o.phone,
+        'created_at': o.created_at,
+        'items': [{
+            'name': item.product.name,
+            'quantity': item.quantity,
+            'price': item.price_at_purchase
+        } for item in o.items]
+    } for o in orders])
 
 @orders_bp.route('/place', methods=['POST'])
 @token_required

@@ -2,55 +2,80 @@
   <div class="checkout-view container">
     <h2 class="section-title">Finalize Your Order</h2>
     
-    <div v-if="successOrder" class="success-screen">
+    <div v-if="successOrder" class="success-screen card">
       <div class="success-icon">✓</div>
-      <h2>Order Placed Successfully!</h2>
-      <p>A confirmation message has been sent to your WhatsApp.</p>
-      <p>Order ID: #{{ successOrder }}</p>
-      <router-link to="/products" class="btn btn-secondary mt-2">Continue Shopping</router-link>
+      <h3>Order Placed Successfully!</h3>
+      <p>Thank you for choosing Kashmiri Dry Fruits. Your order #{{ successOrder.id }} is being processed.</p>
+      <div class="success-actions">
+        <router-link to="/orders" class="btn btn-primary">View My Orders</router-link>
+        <router-link to="/" class="btn btn-outline">Continue Shopping</router-link>
+      </div>
     </div>
 
-    <div v-else class="checkout-layout">
-      <!-- Shipping Form -->
-      <div class="shipping-info card">
-        <h3>Shipping Details</h3>
-        <form @submit.prevent="handleCheckout" class="checkout-form">
+    <div v-else class="checkout-grid">
+      <!-- Checkout Form -->
+      <div class="checkout-form card">
+        <h3>Shipping Information</h3>
+        <form @submit.prevent="handleCheckout">
           <div class="form-group">
-            <label>Full Address</label>
-            <textarea v-model="form.address" placeholder="House/Apt No, Street, City, Pincode" required></textarea>
+            <label>Full Name</label>
+            <input v-model="form.name" type="text" placeholder="Your full name" required />
           </div>
-          
           <div class="form-group">
-            <label>WhatsApp Number</label>
+            <label>Phone Number</label>
             <input v-model="form.phone" type="tel" placeholder="+91 XXXX XXX XXX" required />
-            <small>We'll send your order confirmation here.</small>
+          </div>
+          <div class="form-group">
+            <label>Shipping Address</label>
+            <textarea v-model="form.address" rows="4" placeholder="House/Apt No, Street, City, Pincode" required></textarea>
           </div>
 
-          <div class="payment-method">
-            <h3>Payment Method</h3>
-            <div class="payment-option active">
-              <input type="radio" checked />
-              <label>Secured Payment Gateway (Razorpay/Stripe)</label>
+          <div class="payment-section">
+            <h4>Payment Method</h4>
+            <div class="payment-options">
+              <label class="payment-option active">
+                <input type="radio" name="payment" checked />
+                <span class="option-details">
+                  <strong>Secure Online Payment</strong>
+                  <small>Razorpay / Stripe / Cards</small>
+                </span>
+              </label>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary btn-block" :disabled="loading">
-            {{ loading ? 'Processing Payment...' : 'Pay & Place Order' }}
+          <button type="submit" class="btn btn-secondary btn-block mt-2" :disabled="loading">
+            {{ loading ? 'Processing...' : 'Pay & Place Order' }}
           </button>
         </form>
       </div>
 
-      <!-- Summary -->
-      <div class="order-preview card">
-        <h3>Order Preview</h3>
-        <div v-for="item in cartStore.items" :key="item.product_id" class="preview-item">
-          <span>{{ item.quantity }}x {{ item.name }}</span>
-          <span>₹{{ item.price * item.quantity }}</span>
+      <!-- Order Summary -->
+      <div class="order-summary card">
+        <h3>Order Summary</h3>
+        <div class="summary-items">
+          <div v-for="item in cartStore.items" :key="item.product_id" class="summary-item">
+            <div class="item-info">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-qty">Qty: {{ item.quantity }}</span>
+            </div>
+            <span class="item-price">₹{{ item.price * item.quantity }}</span>
+          </div>
         </div>
-        <hr />
-        <div class="total-row">
-          <span>Total Amount</span>
-          <span>₹{{ cartStore.cartTotal }}</span>
+        
+        <div class="summary-totals">
+          <div class="total-row">
+            <span>Subtotal</span>
+            <span>₹{{ cartStore.cartTotal }}</span>
+          </div>
+          <div class="total-row">
+            <span>Shipping</span>
+            <span class="free">FREE</span>
+          </div>
+          <hr />
+          <div class="total-row grand-total">
+            <span>Grand Total</span>
+            <span>₹{{ cartStore.cartTotal }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -60,15 +85,16 @@
 <script setup>
 import { ref } from 'vue'
 import { useCartStore } from '../stores/cartStore'
-import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 import axios from 'axios'
 
 const cartStore = useCartStore()
-const router = useRouter()
+const auth = useAuthStore()
 const loading = ref(false)
 const successOrder = ref(null)
 
 const form = ref({
+  name: auth.user?.name || '',
   address: '',
   phone: ''
 })
@@ -76,21 +102,13 @@ const form = ref({
 const handleCheckout = async () => {
   loading.value = true
   try {
-    // 1. Mock Payment (Simulation)
-    console.log("Initializing Secure Payment Gateway...")
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // 2. Place Order in Backend
+    console.log('Initializing Secure Payment Gateway...')
     const res = await axios.post('/api/orders/place', {
       address: form.value.address,
-      phone: form.value.phone,
-      payment_id: 'PAY_' + Math.random().toString(36).substr(2, 9)
+      phone: form.value.phone
     })
-
-    // 3. Success handling
-    successOrder.value = res.data.order_id
+    successOrder.value = res.data
     cartStore.clearCart()
-    
   } catch (err) {
     console.error('Checkout error:', err.response?.data || err.message)
     alert(err.response?.data?.message || 'Failed to place order')
@@ -102,31 +120,26 @@ const handleCheckout = async () => {
 
 <style scoped>
 .checkout-view {
-  padding-top: 3rem;
-  max-width: 900px;
+  padding-top: 4rem;
+  padding-bottom: 8rem;
 }
 
 .section-title {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   color: var(--primary);
+  text-align: center;
 }
 
-.checkout-layout {
+.checkout-grid {
   display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 2rem;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 3rem;
+  align-items: start;
 }
 
-.card {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.card h3 {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+.checkout-form h3, .order-summary h3 {
+  margin-bottom: 2rem;
+  font-size: 1.4rem;
   color: var(--primary);
 }
 
@@ -136,57 +149,101 @@ const handleCheckout = async () => {
 
 .form-group label {
   display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
-  font-weight: 600;
-  font-size: 0.9rem;
+  color: #666;
 }
 
-.form-group textarea, .form-group input {
+.form-group input, .form-group textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  outline: none;
+  padding: 1rem;
+  border: 1px solid #eee;
+  background: #f9f9f9;
+  border-radius: 10px;
+  font-family: inherit;
 }
 
-.payment-method {
-  margin: 2rem 0;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+.payment-section {
+  margin-top: 3rem;
+}
+
+.payment-section h4 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
 }
 
 .payment-option {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: #fdfaf5;
+  gap: 1rem;
+  padding: 1.5rem;
   border: 2px solid var(--secondary);
-  border-radius: 8px;
+  background: rgba(244, 164, 96, 0.05);
+  border-radius: 12px;
+  cursor: pointer;
 }
 
-.preview-item {
+.option-details strong {
+  display: block;
+  color: var(--primary);
+}
+
+.option-details small {
+  color: #888;
+}
+
+.summary-items {
+  margin-bottom: 2rem;
+}
+
+.summary-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.item-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.item-qty {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.summary-totals {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 12px;
 }
 
 .total-row {
   display: flex;
   justify-content: space-between;
-  font-weight: 800;
-  font-size: 1.2rem;
-  color: var(--primary);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.grand-total {
   margin-top: 1rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--primary);
+}
+
+.free {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .success-screen {
+  max-width: 600px;
+  margin: 0 auto;
   text-align: center;
-  padding: 5rem 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
+  padding: 4rem;
 }
 
 .success-icon {
@@ -200,9 +257,22 @@ const handleCheckout = async () => {
   margin: 0 auto 2rem;
 }
 
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 .btn-block {
   width: 100%;
 }
 
 .mt-2 { margin-top: 2rem; }
+
+@media (max-width: 992px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

@@ -3,8 +3,8 @@
     <header class="admin-header">
       <h1>Admin Insights & Inventory</h1>
       <div class="header-actions">
-        <button @click="analyticsStore.fetchStats()" class="btn btn-outline btn-sm">Refresh Stats</button>
-        <button @click="showAddModal = true" class="btn btn-secondary">+ Add New Product</button>
+        <button @click="refreshAllData" class="btn btn-outline btn-sm">Refresh Stats</button>
+        <button id="add-product-btn" @click="showAddModal = true" class="btn btn-secondary">+ Add New Product</button>
       </div>
     </header>
 
@@ -48,6 +48,47 @@
         </table>
       </div>
     </div>
+
+    <hr class="divider" />
+
+    <!-- Orders Management -->
+    <section class="admin-section">
+      <h2 class="section-title">Recent Customer Orders</h2>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in orders" :key="order.id">
+              <td>#{{ order.id }}</td>
+              <td>
+                <div class="cust-info">
+                  <strong>{{ order.customer_name }}</strong>
+                  <small>{{ order.customer_email }}</small>
+                </div>
+              </td>
+              <td>{{ formatDate(order.created_at) }}</td>
+              <td><strong>₹{{ order.total_amount }}</strong></td>
+              <td><span class="status-badge active">{{ order.status }}</span></td>
+              <td>
+                <button @click="viewOrderDetails(order)" class="btn-text">View Items</button>
+              </td>
+            </tr>
+            <tr v-if="orders.length === 0">
+              <td colspan="6" class="text-center">No orders placed yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <hr class="divider" />
 
@@ -123,8 +164,16 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="prod-desc">Description</label>
-            <textarea id="prod-desc" v-model="form.description"></textarea>
+            <label for="prod-desc">Short Description</label>
+            <textarea id="prod-desc" v-model="form.description" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="prod-details">Detailed Product Story (Optional)</label>
+            <textarea id="prod-details" v-model="form.details" rows="5" placeholder="Tell the story of this product, its origin, and craft..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="prod-image">Image URL (Optional)</label>
+            <input id="prod-image" v-model="form.image_url" placeholder="https://..." />
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-outline">Cancel</button>
@@ -140,11 +189,13 @@
 import { ref, onMounted } from 'vue'
 import { useProductStore } from '../stores/productStore'
 import { useAnalyticsStore } from '../stores/analyticsStore'
+import axios from 'axios'
 
 const productStore = useProductStore()
 const analyticsStore = useAnalyticsStore()
 const showAddModal = ref(false)
 const editingId = ref(null)
+const orders = ref([])
 
 const form = ref({
   name: '',
@@ -153,14 +204,43 @@ const form = ref({
   stock: 0,
   category_id: null,
   description: '',
-  image_url: 'https://via.placeholder.com/150'
+  image_url: ''
 })
 
 onMounted(() => {
   productStore.fetchProducts()
   productStore.fetchCategories()
   analyticsStore.fetchStats()
+  fetchOrders()
 })
+
+const refreshAllData = () => {
+  analyticsStore.fetchStats()
+  fetchOrders()
+}
+
+const fetchOrders = async () => {
+  try {
+    const res = await axios.get('/api/orders/admin')
+    orders.value = res.data
+  } catch (err) {
+    console.error('Failed to fetch admin orders:', err)
+  }
+}
+
+const formatDate = (dateStr) => {
+  return new Date(dateStr).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const viewOrderDetails = (order) => {
+  const itemsList = order.items.map(i => `${i.quantity}x ${i.name}`).join('\n')
+  alert(`Order #${order.id} Details:\n\nItems:\n${itemsList}\n\nAddress:\n${order.address}\n\nPhone: ${order.phone}`)
+}
 
 const editProduct = (product) => {
   editingId.value = product.id

@@ -6,26 +6,36 @@ from playwright.sync_api import expect
 
 @given('a product exists with ID {prod_id:d}')
 def step_impl(context, prod_id):
-    pass
+    # Fetch first available product
+    response = context.api_session.get(f"{context.base_api_url}/products/")
+    products = response.json()
+    if products:
+        context.valid_prod_id = products[0]['id']
+    else:
+        assert False, "No products found in database"
 
 @when('I add {quantity:d} units of product {prod_id:d} to the cart')
 @when('I add {quantity:d} unit of product {prod_id:d} to the cart')
 def step_impl(context, quantity, prod_id):
-    payload = {"product_id": prod_id, "quantity": quantity}
+    # Use dynamic product ID if available
+    pid = getattr(context, 'valid_prod_id', prod_id)
+    payload = {"product_id": pid, "quantity": quantity}
     context.response = context.api_session.post(f"{context.base_api_url}/cart/add", json=payload)
 
 @then('the cart should contain {quantity:d} units of product {prod_id:d}')
 def step_impl(context, quantity, prod_id):
+    pid = getattr(context, 'valid_prod_id', prod_id)
     response = context.api_session.get(f"{context.base_api_url}/cart/")
     cart_items = response.json()
-    # Assuming the API returns a list of items for the user
-    item = next((i for i in cart_items if i['product_id'] == prod_id), None)
+    item = next((i for i in cart_items if i['product_id'] == pid), None)
     assert item is not None
     assert item['quantity'] == quantity
 
 @given('my cart contains items')
 def step_impl(context):
-    payload = {"product_id": 1, "quantity": 1}
+    response = context.api_session.get(f"{context.base_api_url}/products/")
+    pid = response.json()[0]['id']
+    payload = {"product_id": pid, "quantity": 1}
     context.api_session.post(f"{context.base_api_url}/cart/add", json=payload)
 
 @when('I place an order with address "{address}" and phone "{phone}"')
