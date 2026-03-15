@@ -18,16 +18,16 @@
         <h3>Shipping Information</h3>
         <form @submit.prevent="handleCheckout">
           <div class="form-group">
-            <label>Full Name</label>
-            <input v-model="form.name" type="text" placeholder="Your full name" required />
+            <label for="full-name">Full Name</label>
+            <input id="full-name" v-model="form.name" type="text" placeholder="Your full name" required />
           </div>
           <div class="form-group">
-            <label>Phone Number</label>
-            <input v-model="form.phone" type="tel" placeholder="+91 XXXX XXX XXX" required />
+            <label for="phone">Phone Number</label>
+            <input id="phone" v-model="form.phone" type="tel" placeholder="+91 XXXX XXX XXX" required />
           </div>
           <div class="form-group">
-            <label>Shipping Address</label>
-            <textarea v-model="form.address" rows="4" placeholder="House/Apt No, Street, City, Pincode" required></textarea>
+            <label for="address">Shipping Address</label>
+            <textarea id="address" v-model="form.address" rows="4" placeholder="House/Apt No, Street, City, Pincode" required></textarea>
           </div>
 
           <div class="payment-section">
@@ -54,8 +54,13 @@
         <h3>Order Summary</h3>
         <div class="summary-items">
           <div v-for="item in cartStore.items" :key="item.product_id" class="summary-item">
+            <router-link :to="'/products/' + item.product_id" class="item-thumb">
+              <img :src="item.image_url || 'https://via.placeholder.com/50'" :alt="item.name" />
+            </router-link>
             <div class="item-info">
-              <span class="item-name">{{ item.name }}</span>
+              <router-link :to="'/products/' + item.product_id" class="item-name-link">
+                <span class="item-name">{{ item.name }}</span>
+              </router-link>
               <span class="item-qty">Qty: {{ item.quantity }}</span>
             </div>
             <span class="item-price">₹{{ item.price * item.quantity }}</span>
@@ -198,9 +203,30 @@ const handleCheckout = async () => {
 
 .summary-item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   padding: 1rem 0;
   border-bottom: 1px solid #f5f5f5;
+}
+
+.item-thumb img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.item-info {
+  flex-grow: 1;
+}
+
+.item-name-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.item-name-link:hover .item-name {
+  color: var(--secondary);
 }
 
 .item-name {

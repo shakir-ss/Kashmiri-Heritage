@@ -20,6 +20,11 @@ def step_impl(context):
     context.page.fill('input[type="password"]', "root123")
     context.page.click('button:has-text("Login")')
     context.page.wait_for_url(f"{context.base_ui_url}/")
+    
+    # Capture token from localStorage for any following API steps
+    context.token = context.page.evaluate("window.localStorage.getItem('token')")
+    if context.token:
+        context.api_session.headers.update({"Authorization": f"Bearer {context.token}"})
 
 @then('the status code should be {status_code:d}')
 def step_impl(context, status_code):

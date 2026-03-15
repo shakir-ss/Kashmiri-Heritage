@@ -7,13 +7,26 @@
     </div>
 
     <div class="detail-grid">
-      <!-- Product Image -->
+      <!-- Product Image Gallery -->
       <div class="product-visuals">
         <div class="main-image-container card">
-          <img :src="product.image_url || 'https://via.placeholder.com/600x800?text=Kashmiri+Product'" :alt="product.name" />
+          <img :src="activeImage || 'https://via.placeholder.com/600x800?text=Kashmiri+Product'" :alt="product.name" />
           <button @click="wishlistStore.toggleWishlist(product)" class="wishlist-btn" :class="{ active: wishlistStore.isInWishlist(product.id) }">
             {{ wishlistStore.isInWishlist(product.id) ? '❤️' : '🤍' }}
           </button>
+        </div>
+        
+        <!-- Thumbnails -->
+        <div v-if="allImages.length > 1" class="thumbnail-gallery">
+          <div 
+            v-for="(img, index) in allImages" 
+            :key="index" 
+            class="thumb-card card" 
+            :class="{ active: activeImage === img }"
+            @click="activeImage = img"
+          >
+            <img :src="img" :alt="product.name + ' thumbnail ' + index" />
+          </div>
         </div>
       </div>
 
@@ -80,11 +93,25 @@ const wishlistStore = useWishlistStore()
 const product = ref(null)
 const loading = ref(true)
 const quantity = ref(1)
+const activeImage = ref(null)
 
 onMounted(async () => {
   product.value = await productStore.fetchProductById(route.params.id)
+  if (product.value) {
+    activeImage.value = product.value.image_url
+  }
   loading.value = false
   wishlistStore.fetchWishlist()
+})
+
+const allImages = computed(() => {
+  if (!product.value) return []
+  const images = []
+  if (product.value.image_url) images.push(product.value.image_url)
+  if (product.value.images && product.value.images.length > 0) {
+    images.push(...product.value.images)
+  }
+  return images
 })
 
 const formattedDetails = computed(() => {
@@ -140,6 +167,35 @@ const buyNow = () => {
   height: 100%;
   object-fit: cover;
 }
+
+.thumbnail-gallery {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.thumb-card {
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.thumb-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-card:hover { transform: translateY(-3px); }
+.thumb-card.active { border-color: var(--secondary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .wishlist-btn {
   position: absolute;

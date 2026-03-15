@@ -36,3 +36,11 @@ Feature: Cart and Checkout
         And I click the "Pay & Place Order" button
         Then I should see "Order Placed Successfully!"
         And I should see my order in the order history
+
+    @ui @regression
+    Scenario: Navigate to product detail from cart
+        Given I am on the Home page
+        When I add "Mamra Almonds" to the cart
+        And I go to the Cart page
+        When I click on the product icon for "Mamra Almonds"
+        Then I should be on the detail page for "Mamra Almonds"

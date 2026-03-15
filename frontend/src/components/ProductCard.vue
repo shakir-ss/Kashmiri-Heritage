@@ -15,6 +15,9 @@
         <span class="price">₹{{ product.discount_price || product.price }}</span>
         <span v-if="product.discount_price" class="old-price">₹{{ product.price }}</span>
       </div>
+      <div class="stock-status" :class="{ 'out-of-stock-text': product.stock <= 0 }">
+        {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
+      </div>
       <button 
         @click.stop="$emit('add-to-cart', product)" 
         class="btn btn-primary btn-sm"
@@ -158,6 +161,18 @@ const truncate = (text, length) => {
   color: #bbb;
   font-size: 0.9rem;
   margin-left: 0.75rem;
+}
+
+.stock-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2c7a7b;
+  margin-bottom: 1rem;
+}
+
+.stock-status.out-of-stock-text {
+  color: #d00;
 }
 
 .btn-sm {

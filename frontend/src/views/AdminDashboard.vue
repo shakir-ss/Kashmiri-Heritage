@@ -92,6 +92,39 @@
 
     <hr class="divider" />
 
+    <!-- Category Management -->
+    <section class="admin-section">
+      <div class="section-header">
+        <h2 class="section-title">Categories</h2>
+        <button @click="openCategoryModal()" class="btn btn-primary btn-sm">+ New Category</button>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Slug</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="cat in productStore.categories" :key="cat.id">
+              <td><strong>{{ cat.name }}</strong></td>
+              <td>{{ cat.slug }}</td>
+              <td>{{ truncate(cat.description || '', 50) }}</td>
+              <td class="actions">
+                <button @click="openCategoryModal(cat)" class="btn-text">Edit</button>
+                <button @click="productStore.deleteCategory(cat.id)" class="btn-text delete">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
     <!-- Inventory Management -->
     <h2 class="section-title">Product Inventory</h2>
     <div class="admin-table-container">
@@ -108,13 +141,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="product in productStore.products" :key="product.id">
-            <td><strong>{{ product.name }}</strong></td>
-            <td>{{ product.category }}</td>
+          <tr v-for="product in productStore.products" :key="product.id" :class="{'row-out-of-stock': product.stock <= 0, 'row-low-stock': product.stock > 0 && product.stock <= 5}">
+            <td>
+              <div class="product-cell">
+                <img :src="product.image_url || 'https://via.placeholder.com/40'" class="mini-thumb" />
+                <strong>{{ product.name }}</strong>
+              </div>
+            </td>
+            <td><span class="category-pill">{{ product.category }}</span></td>
             <td>₹{{ product.price }}</td>
             <td>{{ product.discount_price ? '₹' + product.discount_price : '-' }}</td>
             <td>
-              <span :class="{'out-of-stock': product.stock <= 0}">{{ product.stock }}</span>
+              <div class="stock-badge" :class="{'out-of-stock': product.stock <= 0, 'low-stock': product.stock > 0 && product.stock <= 5}">
+                {{ product.stock }} {{ product.stock <= 0 ? '(Empty)' : 'units' }}
+              </div>
             </td>
             <td>
               <span class="status-badge" :class="product.is_active ? 'active' : 'inactive'">
@@ -172,12 +212,41 @@
             <textarea id="prod-details" v-model="form.details" rows="5" placeholder="Tell the story of this product, its origin, and craft..."></textarea>
           </div>
           <div class="form-group">
-            <label for="prod-image">Image URL (Optional)</label>
-            <input id="prod-image" v-model="form.image_url" placeholder="https://..." />
+            <label for="prod-image">Main Image URL</label>
+            <input id="prod-image" v-model="form.image_url" placeholder="https://..." required />
+          </div>
+          <div class="form-group">
+            <label>Additional Images (Optional)</label>
+            <div v-for="(img, index) in form.additional_images" :key="index" class="image-input-row">
+              <input v-model="form.additional_images[index]" placeholder="https://..." />
+              <button type="button" @click="removeImageField(index)" class="btn-text delete">Remove</button>
+            </div>
+            <button type="button" @click="addImageField" class="btn-text">+ Add Another Image</button>
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-outline">Cancel</button>
             <button type="submit" class="btn btn-secondary">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div v-if="showCategoryModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>{{ editingCatId ? 'Edit Category' : 'New Category' }}</h2>
+        <form @submit.prevent="saveCategory" class="modal-form">
+          <div class="form-group">
+            <label for="cat-name">Category Name</label>
+            <input id="cat-name" v-model="catForm.name" required />
+          </div>
+          <div class="form-group">
+            <label for="cat-desc">Description</label>
+            <textarea id="cat-desc" v-model="catForm.description" rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeCategoryModal" class="btn btn-outline">Cancel</button>
+            <button type="submit" class="btn btn-secondary">Save Category</button>
           </div>
         </form>
       </div>
@@ -194,7 +263,9 @@ import axios from 'axios'
 const productStore = useProductStore()
 const analyticsStore = useAnalyticsStore()
 const showAddModal = ref(false)
+const showCategoryModal = ref(false)
 const editingId = ref(null)
+const editingCatId = ref(null)
 const orders = ref([])
 
 const form = ref({
@@ -204,7 +275,13 @@ const form = ref({
   stock: 0,
   category_id: null,
   description: '',
-  image_url: ''
+  image_url: '',
+  additional_images: []
+})
+
+const catForm = ref({
+  name: '',
+  description: ''
 })
 
 onMounted(() => {
@@ -214,9 +291,49 @@ onMounted(() => {
   fetchOrders()
 })
 
+const truncate = (text, length) => {
+  return text.length > length ? text.substring(0, length) + '...' : text
+}
+
+const addImageField = () => {
+  form.value.additional_images.push('')
+}
+
+const removeImageField = (index) => {
+  form.value.additional_images.splice(index, 1)
+}
+
+const openCategoryModal = (cat = null) => {
+  if (cat) {
+    editingCatId.value = cat.id
+    catForm.value = { name: cat.name, description: cat.description }
+  } else {
+    editingCatId.value = null
+    catForm.value = { name: '', description: '' }
+  }
+  showCategoryModal.value = true
+}
+
+const closeCategoryModal = () => {
+  showCategoryModal.value = false
+  editingCatId.value = null
+}
+
+const saveCategory = async () => {
+  let success
+  if (editingCatId.value) {
+    success = await productStore.updateCategory(editingCatId.value, catForm.value)
+  } else {
+    success = await productStore.addCategory(catForm.value)
+  }
+  if (success) closeCategoryModal()
+}
+
 const refreshAllData = () => {
   analyticsStore.fetchStats()
   fetchOrders()
+  productStore.fetchProducts()
+  productStore.fetchCategories()
 }
 
 const fetchOrders = async () => {
@@ -244,7 +361,10 @@ const viewOrderDetails = (order) => {
 
 const editProduct = (product) => {
   editingId.value = product.id
-  form.value = { ...product }
+  form.value = { 
+    ...product,
+    additional_images: product.images ? [...product.images] : []
+  }
   showAddModal.value = true
 }
 
@@ -262,15 +382,133 @@ const saveProduct = async () => {
 const closeModal = () => {
   showAddModal.value = false
   editingId.value = null
-  form.value = { name: '', price: 0, discount_price: null, stock: 0, category_id: null, description: '', image_url: '' }
+  form.value = { name: '', price: 0, discount_price: null, stock: 0, category_id: null, description: '', image_url: '', additional_images: [] }
 }
 </script>
 
 <style scoped>
 .admin-dashboard {
   padding-top: 2rem;
+  padding-bottom: 5rem;
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.image-input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.image-input-row input {
+  flex-grow: 1;
+}
+
+.modal-form input, .modal-form select, .modal-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+/* Enhanced Table Styles */
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mini-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #eee;
+}
+
+.category-pill {
+  background: #f0f4f8;
+  color: #4a5568;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stock-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.stock-badge.low-stock {
+  background: #fffaf0;
+  color: #b7791f;
+}
+
+.stock-badge.out-of-stock {
+  background: #fff5f5;
+  color: #c53030;
+}
+
+/* Row Highlighting */
+.admin-table tr.row-out-of-stock {
+  background-color: rgba(255, 0, 0, 0.03);
+  box-shadow: inset 4px 0 0 #e53e3e;
+}
+
+.admin-table tr.row-low-stock {
+  background-color: rgba(255, 165, 0, 0.02);
+  box-shadow: inset 4px 0 0 #ed8936;
+}
+
+.admin-table tr:hover {
+  background-color: #fcfcfc;
+}
+
+.text-center { text-align: center; }
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active { background: #e6fffa; color: #2c7a7b; }
+.status-badge.inactive { background: #fff0f0; color: #d00; }
+
+.cust-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cust-info small {
+  color: #888;
+}
+
+/* Modal and layout fixes */
 .admin-header {
   display: flex;
   justify-content: space-between;
@@ -318,13 +556,14 @@ const closeModal = () => {
 .text-right { text-align: right; }
 
 .divider { margin: 3rem 0; border: 0; border-top: 1px solid #eee; }
-.section-title { margin-bottom: 1.5rem; color: var(--primary); }
+.section-title { margin-bottom: 1.5rem; color: var(--primary); font-size: 1.5rem; }
 
 .admin-table-container {
   background: white;
   border-radius: 12px;
   box-shadow: var(--shadow);
   overflow: hidden;
+  margin-bottom: 2rem;
 }
 
 .admin-table {
@@ -343,19 +582,8 @@ const closeModal = () => {
   font-size: 0.85rem;
   text-transform: uppercase;
   color: #666;
+  font-weight: 700;
 }
-
-.status-badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-badge.active { background: #e6fffa; color: #2c7a7b; }
-.status-badge.inactive { background: #fff0f0; color: #d00; }
-
-.out-of-stock { color: #d00; font-weight: 700; }
 
 .btn-text {
   background: none;
@@ -368,7 +596,6 @@ const closeModal = () => {
 
 .btn-text.delete { color: #d00; }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -388,6 +615,8 @@ const closeModal = () => {
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .form-row {

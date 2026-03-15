@@ -89,9 +89,8 @@ def step_impl(context):
 
 @when('I fill in address "{address}" and phone "{phone}"')
 def step_impl(context, address, phone):
-    context.page.screenshot(path="debug_checkout_page.png")
-    context.page.fill('textarea[placeholder="House/Apt No, Street, City, Pincode"]', address)
-    context.page.fill('input[placeholder="+91 XXXX XXX XXX"]', phone)
+    context.page.locator('textarea[placeholder*="House/Apt"]').fill(address)
+    context.page.locator('input[placeholder*="+91"]').fill(phone)
 
 @then('I should see "{message}"')
 def step_impl(context, message):
@@ -111,3 +110,18 @@ def step_impl(context):
     context.page.wait_for_load_state("networkidle")
     # Assuming .order-card exists in the order history view
     expect(context.page.locator('.order-card').first).to_be_visible(timeout=10000)
+
+@when('I click on the product icon for "{name}"')
+def step_impl(context, name):
+    # Find the link that contains the image for this item
+    # We added <router-link class="item-link"> around the img
+    item_row = context.page.locator('.cart-item', has_text=name).first
+    item_row.locator('.item-link img').click()
+
+@then('I should be on the detail page for "{name}"')
+def step_impl(context, name):
+    # URL should contain products/ID
+    import re
+    context.page.wait_for_url(re.compile(r".*/products/\d+"))
+    # Header should have name
+    expect(context.page.locator('h1')).to_contain_text(name)

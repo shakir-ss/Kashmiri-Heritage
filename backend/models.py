@@ -46,6 +46,16 @@ class Product(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     details = db.Column(db.Text) # Rich details about the product
+    
+    images = db.relationship('ProductImage', backref='product', lazy=True, cascade="all, delete-orphan")
+
+class ProductImage(db.Model):
+    __tablename__ = 'product_images'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class WishlistItem(db.Model):
     __tablename__ = 'wishlist_items'

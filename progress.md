@@ -64,9 +64,22 @@
 - [x] Feature: Product Detail Page with rich "Artisan Stories"
 - [x] Feature: Customer Wishlist (Save for later functionality)
 - [x] Feature: Buy It Now (Direct checkout journey)
+- [x] Feature: Global Navigation (Product icons in Cart/Wishlist/Checkout link to detail pages)
 - [x] Admin: Rich text support for product storytelling
 - [x] Admin: Optional image field flexibility
 - [x] BDD: Comprehensive tests for Wishlist and Detail pages (100% pass)
 
-## CURRENT STATUS: **FEATURE COMPLETE (MVP)**
-*The platform is functionally rich, visually premium, and fully verified through BDD.*
+## [PHASE 13] ADMIN ENHANCEMENTS & MULTI-MEDIA
+- [x] Feature: Multi-image support for Products (Backend & UI)
+- [x] Feature: Category Management CRUD (UI & API)
+- [x] UI: Product Detail Image Gallery with thumbnails
+- [x] UI: Admin Dashboard Visual Overhaul (Card designs, better badges)
+- [x] UI: Inventory Row Highlighting (Red for out-of-stock, Orange for low-stock)
+- [x] Skill: `test-validator` for automatic BDD test synchronization
+- [x] BDD: Verified category CRUD and multi-image gallery (100% pass)
+
+## [PHASE 14] INVENTORY & STOCK LOGIC
+- [x] Backend: Atomic stock deduction on order placement
+- [x] Frontend: Cart-level stock validation and quantity limits
+- [x] UI: "Out of Stock" visual indicators and button disabling across all views (Card, Detail, Cart)
+- [x] BDD: Verified real-time stock updates after checkout (100% pass)

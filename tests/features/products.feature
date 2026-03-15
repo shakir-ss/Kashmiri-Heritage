@@ -27,6 +27,7 @@ Feature: Product Management
     @api @regression @positive
     Scenario: Create product without image via API
         Given I am logged in as admin via API
+        And a category exists with ID 1
         When I create a product with name "No Image Item", price 100, stock 10, and no image URL
         Then the API should return a success message "Product created successfully"
         And the status code should be 201
@@ -52,9 +53,27 @@ Feature: Product Management
         And I should see the product story "Our Mamra Almonds are sourced"
 
     @ui @regression @positive
-    Scenario: Admin adds product with detailed story via Dashboard
+    Scenario: Admin adds product with multiple images and detailed story
         Given I am logged in as admin on the UI
         And I am on the Admin Dashboard
-        When I fill in the product form with name "Craft Box", price 2000, stock 5, and details "Hand-painted by local artisans"
+        When I fill in the product form with name "Kashmiri Kahwa Set", price 1500, stock 10, and details "Authentic copper samovar with 6 cups"
+        And I add an additional image URL "https://via.placeholder.com/600x800?text=Kahwa+1"
+        And I add an additional image URL "https://via.placeholder.com/600x800?text=Kahwa+2"
         And I click the "Save Product" button
-        Then I should see the product "Craft Box" in the product list
+        Then I should see the product "Kashmiri Kahwa Set" in the product list
+        When I am on the Products page
+        And I click on product "Kashmiri Kahwa Set"
+        Then I should see the product detail page for "Kashmiri Kahwa Set"
+        And I should see 3 images in the gallery
+
+    @ui @admin @categories
+    Scenario: Admin manages categories via Dashboard
+        Given I am logged in as admin on the UI
+        And I am on the Admin Dashboard
+        When I click "+ New Category"
+        And I fill in category name "Handicrafts" and description "Exquisite Kashmiri art"
+        And I click the modal button "Save Category"
+        Then I should see the category "Handicrafts" in the category list
+        When I edit the category "Handicrafts" to name "Art & Crafts"
+        And I click the modal button "Save Category"
+        Then I should see the category "Art & Crafts" in the category list

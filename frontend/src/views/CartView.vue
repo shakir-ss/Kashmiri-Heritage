@@ -11,15 +11,26 @@
       <!-- Cart Items -->
       <div class="cart-items">
         <div v-for="item in cartStore.items" :key="item.product_id" class="cart-item">
-          <img :src="item.image_url || 'https://via.placeholder.com/80'" :alt="item.name" />
+          <router-link :to="'/products/' + item.product_id" class="item-link">
+            <img :src="item.image_url || 'https://via.placeholder.com/80'" :alt="item.name" />
+          </router-link>
           <div class="item-details">
-            <h4>{{ item.name }}</h4>
+            <router-link :to="'/products/' + item.product_id" class="item-name-link">
+              <h4>{{ item.name }}</h4>
+            </router-link>
             <p class="price">₹{{ item.price }}</p>
+            <p class="stock-info" :class="{ 'low-stock': item.stock <= 5 }">
+              {{ item.stock > 0 ? `${item.stock} available` : 'Out of stock' }}
+            </p>
           </div>
           <div class="quantity-controls">
             <button @click="cartStore.updateQuantity(item.product_id, item.quantity - 1)" class="btn-qty">-</button>
             <span>{{ item.quantity }}</span>
-            <button @click="cartStore.updateQuantity(item.product_id, item.quantity + 1)" class="btn-qty">+</button>
+            <button 
+              @click="cartStore.updateQuantity(item.product_id, item.quantity + 1)" 
+              class="btn-qty"
+              :disabled="item.quantity >= item.stock"
+            >+</button>
           </div>
           <div class="item-total">
             ₹{{ item.price * item.quantity }}
@@ -119,6 +130,25 @@ const proceedToCheckout = () => {
 .item-details h4 {
   color: var(--primary);
   margin-bottom: 0.25rem;
+}
+
+.item-name-link {
+  text-decoration: none;
+}
+
+.item-name-link:hover h4 {
+  color: var(--secondary);
+}
+
+.stock-info {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
+.stock-info.low-stock {
+  color: #d00;
+  font-weight: 600;
 }
 
 .quantity-controls {

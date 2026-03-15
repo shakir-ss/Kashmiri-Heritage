@@ -33,6 +33,22 @@ def update_schema():
         except Exception as e:
             print(f"Error creating 'wishlist_items' table: {e}")
         
+        try:
+            # Create product_images table
+            db.session.execute(db.text("""
+                CREATE TABLE IF NOT EXISTS product_images (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    product_id INT,
+                    image_url VARCHAR(255) NOT NULL,
+                    is_primary BOOLEAN DEFAULT FALSE,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+                )
+            """))
+            print("Created 'product_images' table.")
+        except Exception as e:
+            print(f"Error creating 'product_images' table: {e}")
+        
         db.session.commit()
         print("Schema update complete.")
 

@@ -11,11 +11,13 @@
 
     <div v-else class="wishlist-grid">
       <div v-for="item in wishlistStore.items" :key="item.id" class="wishlist-card card">
-        <div class="wishlist-image">
+        <router-link :to="'/products/' + item.product_id" class="wishlist-image">
           <img :src="item.image_url || 'https://via.placeholder.com/300'" :alt="item.name" />
-        </div>
+        </router-link>
         <div class="wishlist-info">
-          <h4>{{ item.name }}</h4>
+          <router-link :to="'/products/' + item.product_id" class="item-name-link">
+            <h4>{{ item.name }}</h4>
+          </router-link>
           <p class="price">₹{{ item.price }}</p>
           <div class="card-actions">
             <button @click="addToCart(item)" class="btn btn-secondary btn-sm">Add to Cart</button>
@@ -107,6 +109,14 @@ const removeFromWishlist = (productId) => {
 .wishlist-info h4 {
   color: var(--primary);
   margin-bottom: 0.5rem;
+}
+
+.item-name-link {
+  text-decoration: none;
+}
+
+.item-name-link:hover h4 {
+  color: var(--secondary);
 }
 
 .price {

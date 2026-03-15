@@ -51,8 +51,9 @@ def step_impl(context, name, price, stock, details):
 @when('I create a product with name "{name}", price {price:d}, stock {stock:d}, and no image URL')
 def step_impl(context, name, price, stock):
     cat_id = getattr(context, 'valid_cat_id', 1)
+    unique_name = f"{name} {random.randint(1000, 9999)}"
     payload = {
-        "name": name,
+        "name": unique_name,
         "price": float(price),
         "stock": stock,
         "category_id": cat_id,
@@ -62,9 +63,81 @@ def step_impl(context, name, price, stock):
 
 # --- UI STEPS ---
 
+@when('I try to create a product without an auth token')
+def step_impl(context):
+    payload = {
+        "name": "Unauthorized Item",
+        "price": 100,
+        "stock": 10,
+        "category_id": 1
+    }
+    # Send request without Authorization header
+    context.response = requests.post(f"{context.base_api_url}/products/", json=payload)
+
+@then('the API should return an error message "{message}"')
+def step_impl(context, message):
+    data = context.response.json()
+    assert data.get('message') == message
+
+@given('I create a product with name "{name}", price {price:d}, stock {stock:d}, and details "{details}"')
+def step_impl(context, name, price, stock, details):
+    cat_id = getattr(context, 'valid_cat_id', 1)
+    unique_name = f"{name} {random.randint(1000, 9999)}"
+    # Store unique name in context for later steps
+    context.last_product_name = unique_name
+    payload = {
+        "name": unique_name,
+        "price": float(price),
+        "stock": stock,
+        "category_id": cat_id,
+        "details": details
+    }
+    
+    headers = {}
+    if hasattr(context, 'token'):
+        headers['Authorization'] = f"Bearer {context.token}"
+        
+    context.response = context.api_session.post(
+        f"{context.base_api_url}/products/", 
+        json=payload,
+        headers=headers
+    )
+    assert context.response.status_code == 201, f"Expected 201 but got {context.response.status_code}: {context.response.text}"
+
 @given('I am on the Products page')
+@when('I am on the Products page')
+@when('I go to the Products page')
 def step_impl(context):
     context.page.goto(f"{context.base_ui_url}/products")
+
+@then('I should see product "{name}"')
+def step_impl(context, name):
+    # Use context.last_product_name if name matches placeholder
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    expect(context.page.get_by_text(actual_name).first).to_be_visible()
+
+@then('product "{name}" should show "{status}" or "{alt_status}"')
+def step_impl(context, name, status, alt_status):
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    expect(card).to_contain_text(re.compile(f"{status}|{alt_status}"))
+
+@when('I click on product "{name}"')
+def step_impl(context, name):
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    context.page.locator('.product-card', has_text=actual_name).first.click()
+
+@then('I should see the product detail page for "{name}"')
+def step_impl(context, name):
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    expect(context.page.locator('h1')).to_contain_text(actual_name)
+    expect(context.page).to_have_url(re.compile(r".*/products/\d+"))
+
+@then('product "{name}" should show "{status}"')
+def step_impl(context, name, status):
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    expect(card).to_contain_text(status)
 
 @then('I should see a list of products')
 def step_impl(context):
@@ -72,19 +145,6 @@ def step_impl(context):
     context.page.wait_for_selector('.product-card')
     cards = context.page.locator('.product-card')
     assert cards.count() > 0
-
-@then('I should see product "{name}"')
-def step_impl(context, name):
-    expect(context.page.get_by_text(name).first).to_be_visible()
-
-@when('I click on product "{name}"')
-def step_impl(context, name):
-    context.page.locator('.product-card', has_text=name).first.click()
-
-@then('I should see the product detail page for "{name}"')
-def step_impl(context, name):
-    expect(context.page.locator('h1')).to_contain_text(name)
-    expect(context.page).to_have_url(re.compile(r".*/products/\d+"))
 
 @then('I should see the product story "{text}"')
 def step_impl(context, text):
@@ -106,6 +166,7 @@ def step_impl(context, name, price, stock, details):
         # Select category - assuming first option
         context.page.get_by_label("Category").select_option(index=1)
         context.page.get_by_label("Detailed Product Story").fill(details)
+        context.page.get_by_label("Main Image URL").fill("https://via.placeholder.com/600x800?text=Main+Image")
     except Exception as e:
         context.page.screenshot(path="error_admin_modal_details.png")
         raise e
@@ -120,7 +181,83 @@ def step_impl(context, button_text):
         context.page.screenshot(path=f"error_click_{button_text.replace(' ', '_')}.png")
         raise e
 
+@when('I add an additional image URL "{url}"')
+def step_impl(context, url):
+    context.page.get_by_text("+ Add Another Image").click()
+    # Fill the last input in the image-input-row list
+    context.page.locator('.image-input-row input').last.fill(url)
+
+@then('I should see {count:d} images in the gallery')
+def step_impl(context, count):
+    # Main image + thumbnails
+    thumbnails = context.page.locator('.thumb-card')
+    expect(thumbnails).to_have_count(count)
+
+@when('I click "+ New Category"')
+def step_impl(context):
+    context.page.get_by_text("+ New Category").click()
+
+@when('I fill in category name "{name}" and description "{description}"')
+def step_impl(context, name, description):
+    context.page.get_by_label("Category Name").fill(name)
+    context.page.get_by_label("Description").fill(description)
+
+@then('I should see the category "{name}" in the category list')
+def step_impl(context, name):
+    expect(context.page.locator('table.admin-table').filter(has_text="Slug")).to_contain_text(name)
+
 @then('I should see the product "{name}" in the product list')
 def step_impl(context, name):
-    # Check the specific admin table
-    expect(context.page.locator('table.admin-table')).to_contain_text(name)
+    # Check the specific admin table for products, not orders
+    try:
+        product_table = context.page.locator('table.admin-table').filter(has_text="Product").first
+        expect(product_table).to_contain_text(name, timeout=10000)
+    except Exception as e:
+        context.page.screenshot(path="error_product_list.png")
+        raise e
+
+@when('I edit the category "{name}" to name "{new_name}"')
+def step_impl(context, name, new_name):
+    # Find the row with category name and click Edit
+    row = context.page.locator('tr', has_text=name).first
+    row.get_by_text("Edit").click()
+    context.page.get_by_label("Category Name").fill(new_name)
+
+@then('the "Add to Cart" button for "{name}" should be disabled')
+def step_impl(context, name):
+    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    btn = card.locator('button:has-text("Out of Stock")')
+    expect(btn).to_be_disabled()
+
+@when('I add {count:d} items to the cart')
+def step_impl(context, count):
+    # Wait for the quantity selector to be visible
+    context.page.wait_for_selector('.quantity-selector')
+    # If count > 1, click + button (count - 1) times
+    for _ in range(count - 1):
+        context.page.locator('.quantity-selector button').filter(has_text="+").click()
+    
+    # Click Add to Cart
+    context.page.get_by_role("button", name="Add to Cart").click()
+
+@when('I click the modal button "{button_text}"')
+def step_impl(context, button_text):
+    # Try multiple ways to find the button
+    try:
+        # 1. Direct text match
+        btn = context.page.get_by_role("button", name=button_text, exact=True)
+        if btn.count() > 0:
+            btn.first.click()
+        else:
+            # 2. Contains text
+            btn = context.page.locator(f'button:has-text("{button_text}")').first
+            btn.click()
+            
+        # If it's a save/submit button, wait for modal to disappear
+        if "Save" in button_text or "Pay" in button_text:
+            context.page.wait_for_selector('.modal-overlay', state='hidden', timeout=10000)
+            
+    except Exception as e:
+        context.page.screenshot(path=f"error_modal_btn_{button_text.replace(' ', '_')}.png")
+        raise e

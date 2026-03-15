@@ -14,25 +14,34 @@ export const useCartStore = defineStore('cart', {
   },
 
   actions: {
-    async addItem(product) {
+    async addItem(product, quantity = 1) {
       const auth = useAuthStore()
       const existing = this.items.find(i => i.product_id === product.id)
       
       if (existing) {
-        existing.quantity += 1
+        if (existing.quantity + quantity > product.stock) {
+          alert(`Only ${product.stock} items available in total.`)
+          return
+        }
+        existing.quantity += quantity
       } else {
+        if (quantity > product.stock) {
+          alert(`Only ${product.stock} items available.`)
+          return
+        }
         this.items.push({
           product_id: product.id,
           name: product.name,
           price: product.discount_price || product.price,
-          quantity: 1,
-          image_url: product.image_url
+          quantity: quantity,
+          image_url: product.image_url,
+          stock: product.stock // Store current known stock
         })
       }
       this.persist()
 
       if (auth.isAuthenticated) {
-        await axios.post('/api/cart/add', { product_id: product.id, quantity: 1 })
+        await axios.post('/api/cart/add', { product_id: product.id, quantity })
       }
     },
 
@@ -40,6 +49,10 @@ export const useCartStore = defineStore('cart', {
       const auth = useAuthStore()
       const item = this.items.find(i => i.product_id === productId)
       if (item) {
+        if (quantity > item.stock) {
+          alert(`Only ${item.stock} items available.`)
+          return
+        }
         item.quantity = quantity
         if (item.quantity <= 0) {
           this.items = this.items.filter(i => i.product_id !== productId)

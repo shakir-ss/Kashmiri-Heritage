@@ -74,6 +74,41 @@ export const useProductStore = defineStore('products', {
       } catch (err) {
         this.error = 'Failed to delete product'
       }
+    },
+
+    // --- Category Management ---
+    async addCategory(categoryData) {
+      try {
+        await axios.post('/api/products/categories', categoryData)
+        await this.fetchCategories()
+        return true
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to add category'
+        return false
+      }
+    },
+
+    async updateCategory(id, categoryData) {
+      try {
+        await axios.put(`/api/products/categories/${id}`, categoryData)
+        await this.fetchCategories()
+        return true
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to update category'
+        return false
+      }
+    },
+
+    async deleteCategory(id) {
+      if (!confirm('Are you sure you want to delete this category?')) return
+      try {
+        await axios.delete(`/api/products/categories/${id}`)
+        await this.fetchCategories()
+        return true
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to delete category'
+        return false
+      }
     }
   }
 })
