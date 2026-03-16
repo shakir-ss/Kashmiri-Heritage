@@ -113,7 +113,7 @@ def step_impl(context):
 @then('I should see product "{name}"')
 def step_impl(context, name):
     # Use context.last_product_name if name matches placeholder
-    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    actual_name = context.last_product_name if name == "Limited Edition Box" or name == "Multi-Pack Saffron" or name == "Local Image Product" else name
     expect(context.page.get_by_text(actual_name).first).to_be_visible()
 
 @then('product "{name}" should show "{status}" or "{alt_status}"')
@@ -123,13 +123,14 @@ def step_impl(context, name, status, alt_status):
     expect(card).to_contain_text(re.compile(f"{status}|{alt_status}"))
 
 @when('I click on product "{name}"')
+@given('I click on product "{name}"')
 def step_impl(context, name):
-    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    actual_name = context.last_product_name if name == "Limited Edition Box" or name == "Multi-Pack Saffron" or name == "Local Image Product" else name
     context.page.locator('.product-card', has_text=actual_name).first.click()
 
 @then('I should see the product detail page for "{name}"')
 def step_impl(context, name):
-    actual_name = context.last_product_name if name == "Limited Edition Box" else name
+    actual_name = context.last_product_name if name == "Limited Edition Box" or name == "Multi-Pack Saffron" or name == "Local Image Product" else name
     expect(context.page.locator('h1')).to_contain_text(actual_name)
     expect(context.page).to_have_url(re.compile(r".*/products/\d+"))
 
@@ -151,7 +152,15 @@ def step_impl(context, text):
     expect(context.page.locator('.details-content')).to_contain_text(text)
 
 @when('I fill in the product form with name "{name}", price {price:d}, stock {stock:d}, and details "{details}"')
+@given('I fill in the product form with name "{name}", price {price:d}, stock {stock:d}, and details "{details}"')
 def step_impl(context, name, price, stock, details):
+    # Generate unique name ONLY if not already in context
+    if not hasattr(context, 'last_product_name'):
+        unique_name = f"{name} {random.randint(1000, 9999)}"
+        context.last_product_name = unique_name
+    else:
+        unique_name = context.last_product_name
+    
     # Open the add modal first
     context.page.click('#add-product-btn')
     
@@ -160,9 +169,9 @@ def step_impl(context, name, price, stock, details):
         context.page.wait_for_selector('.modal-content', state='visible', timeout=5000)
         
         # Fill based on labels or IDs
-        context.page.get_by_label("Product Name").fill(name)
-        context.page.get_by_label("Price (₹)").fill(str(price))
-        context.page.get_by_label("Stock").fill(str(stock))
+        context.page.get_by_label("Product Name").fill(unique_name)
+        context.page.get_by_label("Base Price (₹)").fill(str(price))
+        context.page.get_by_label("Total Stock").fill(str(stock))
         # Select category - assuming first option
         context.page.get_by_label("Category").select_option(index=1)
         context.page.get_by_label("Detailed Product Story").fill(details)
@@ -194,10 +203,12 @@ def step_impl(context, count):
     expect(thumbnails).to_have_count(count)
 
 @when('I click "+ New Category"')
+@given('I click "+ New Category"')
 def step_impl(context):
     context.page.get_by_text("+ New Category").click()
 
 @when('I fill in category name "{name}" and description "{description}"')
+@given('I fill in category name "{name}" and description "{description}"')
 def step_impl(context, name, description):
     context.page.get_by_label("Category Name").fill(name)
     context.page.get_by_label("Description").fill(description)
@@ -208,10 +219,12 @@ def step_impl(context, name):
 
 @then('I should see the product "{name}" in the product list')
 def step_impl(context, name):
+    # Use unique name if applicable
+    actual_name = context.last_product_name if name == "Multi-Pack Saffron" or name == "Local Image Product" else name
     # Check the specific admin table for products, not orders
     try:
         product_table = context.page.locator('table.admin-table').filter(has_text="Product").first
-        expect(product_table).to_contain_text(name, timeout=10000)
+        expect(product_table).to_contain_text(actual_name, timeout=10000)
     except Exception as e:
         context.page.screenshot(path="error_product_list.png")
         raise e
@@ -241,7 +254,80 @@ def step_impl(context, count):
     # Click Add to Cart
     context.page.get_by_role("button", name="Add to Cart").click()
 
+@when('I click id "{element_id}"')
+def step_impl(context, element_id):
+    context.page.click(f"#{element_id}")
+
+@when('I fill in "{label}" with "{value}"')
+@given('I fill in "{label}" with "{value}"')
+def step_impl(context, label, value):
+    if label == "Product Name":
+        unique_name = f"{value} {random.randint(1000, 9999)}"
+        context.last_product_name = unique_name
+        context.page.get_by_label(label).fill(unique_name)
+    elif label == "Full Name":
+        context.page.locator('input[id="full-name"]').fill(value)
+    elif label == "Phone Number":
+        context.page.locator('input[id="phone"]').fill(value)
+    elif label == "Shipping Address":
+        context.page.locator('input[id="address"]').fill(value)
+    elif label == "Area Pincode" or label == "Pincode":
+        context.page.wait_for_selector('input[id="pincode"]', state='visible', timeout=10000)
+        context.page.locator('input[id="pincode"]').fill(value)
+    else:
+        context.page.get_by_label(label).fill(value)
+
+@then('product "{name}" should have image source starting with "{path_prefix}"')
+def step_impl(context, name, path_prefix):
+    actual_name = context.last_product_name if name == "Local Image Product" else name
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    img = card.locator('img')
+    src = img.get_attribute('src')
+    # If using dev server, it might be http://localhost:3000/images/...
+    assert path_prefix in src, f"Expected {path_prefix} in {src}"
+
+@when('I fill in variant {idx:d} name "{name}", modifier {modifier:d}, and stock {stock:d}')
+@given('I fill in variant {idx:d} name "{name}", modifier {modifier:d}, and stock {stock:d}')
+def step_impl(context, idx, name, modifier, stock):
+    # variant-input-row list
+    row = context.page.locator('.variant-input-row').nth(idx-1)
+    row.locator('input[placeholder*="Variant Name"]').fill(name)
+    row.locator('input[placeholder="+₹"]').fill(str(modifier))
+    row.locator('input[placeholder="Stock"]').fill(str(stock))
+
+@when('I select category "{name}"')
+@given('I select category "{name}"')
+def step_impl(context, name):
+    context.page.get_by_label("Category").select_option(label=name)
+
+@when('I click button "{text}"')
+@given('I click button "{text}"')
+def step_impl(context, text):
+    # Try getting by role button first, then general text
+    try:
+        btn = context.page.get_by_role("button", name=text, exact=True)
+        if btn.count() > 0:
+            btn.first.click()
+        else:
+            context.page.get_by_text(text, exact=True).first.click()
+    except:
+        # Fallback to locator with has-text
+        context.page.locator(f":has-text('{text}')").first.click()
+
+@then('I should see the variant chip "{name}"')
+def step_impl(context, name):
+    expect(context.page.locator('.variant-chip', has_text=name).first).to_be_visible()
+
+@when('I click variant chip "{name}"')
+def step_impl(context, name):
+    context.page.locator('.variant-chip', has_text=name).first.click()
+
+@then('the price should show "{price}"')
+def step_impl(context, price):
+    expect(context.page.locator('.current-price')).to_contain_text(price)
+
 @when('I click the modal button "{button_text}"')
+@given('I click the modal button "{button_text}"')
 def step_impl(context, button_text):
     # Try multiple ways to find the button
     try:

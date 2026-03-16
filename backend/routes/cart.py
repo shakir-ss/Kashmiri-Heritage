@@ -37,7 +37,7 @@ def add_to_cart(current_user):
         db.session.add(item)
     
     db.session.commit()
-    return jsonify({'message': 'Item added to cart'})
+    return jsonify({'message': 'Item added to cart'}), 201
 
 @cart_bp.route('/update', methods=['PUT'])
 @token_required

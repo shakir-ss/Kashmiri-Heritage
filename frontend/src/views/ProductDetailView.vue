@@ -36,15 +36,37 @@
         <h1>{{ product.name }}</h1>
         
         <div class="price-section">
-          <span class="current-price">₹{{ product.discount_price || product.price }}</span>
-          <span v-if="product.discount_price" class="original-price">₹{{ product.price }}</span>
-          <span v-if="product.discount_price" class="save-tag">Save ₹{{ product.price - product.discount_price }}</span>
+          <span class="current-price">₹{{ displayPrice }}</span>
+          <span v-if="product.discount_price && !selectedVariant" class="original-price">₹{{ product.price }}</span>
+          <span class="weight-info" v-if="product.weight_grams">{{ product.weight_grams }}g</span>
+        </div>
+
+        <div class="variants-section" v-if="product.variants && product.variants.length > 0">
+          <label>Select Option:</label>
+          <div class="variant-chips">
+            <button 
+              v-for="v in product.variants" 
+              :key="v.id"
+              class="variant-chip"
+              :class="{ active: selectedVariant?.id === v.id }"
+              @click="selectedVariant = v"
+            >
+              {{ v.name }}
+            </button>
+            <button 
+              class="variant-chip" 
+              :class="{ active: !selectedVariant }"
+              @click="selectedVariant = null"
+            >
+              Standard
+            </button>
+          </div>
         </div>
 
         <p class="short-desc">{{ product.description }}</p>
 
-        <div class="inventory-status" :class="{ 'out-of-stock': product.stock <= 0 }">
-          {{ product.stock > 0 ? `In Stock (${product.stock} available)` : 'Currently Out of Stock' }}
+        <div class="inventory-status" :class="{ 'out-of-stock': displayStock <= 0 }">
+          {{ displayStock > 0 ? `In Stock (${displayStock} available)` : 'Currently Out of Stock' }}
         </div>
 
         <div class="action-buttons">
@@ -71,6 +93,36 @@
       <h2 class="section-title">The Story & Details</h2>
       <div class="details-content card kashmiri-pattern" v-html="formattedDetails"></div>
     </div>
+
+    <!-- Artisan Heritage Section (Canva Inspired) -->
+    <section class="artisan-heritage mt-4">
+      <div class="heritage-card card">
+        <div class="heritage-grid">
+          <div class="heritage-text">
+            <span class="heritage-label">Artisan Heritage</span>
+            <h2>The Hands Behind the Craft</h2>
+            <p>Every product in our collection tells a story of generations. Sourced from the high-altitude valleys where the air is pure and the traditions are deep-rooted.</p>
+            
+            <div class="heritage-features">
+              <div class="h-feature">
+                <strong>The Roots</strong>
+                <p>Authentically harvested from the sun-drenched orchards of Srinagar and Ganderbal.</p>
+              </div>
+              <div class="h-feature">
+                <strong>The Craft</strong>
+                <p>Processed using traditional methods preserved by local Kashmiri families for centuries.</p>
+              </div>
+            </div>
+          </div>
+          <div class="heritage-visual">
+            <div class="heritage-img-wrapper">
+              <img src="https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg" alt="Artisan at work" />
+              <div class="img-overlay-accent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
   <div v-else-if="loading" class="container loading-state">
     <p>Discovering Kashmiri treasures...</p>
@@ -94,6 +146,7 @@ const product = ref(null)
 const loading = ref(true)
 const quantity = ref(1)
 const activeImage = ref(null)
+const selectedVariant = ref(null)
 
 onMounted(async () => {
   product.value = await productStore.fetchProductById(route.params.id)
@@ -102,6 +155,21 @@ onMounted(async () => {
   }
   loading.value = false
   wishlistStore.fetchWishlist()
+})
+
+const displayPrice = computed(() => {
+  if (!product.value) return 0
+  let price = product.value.discount_price || product.value.price
+  if (selectedVariant.value) {
+    price += selectedVariant.value.price_modifier
+  }
+  return price
+})
+
+const displayStock = computed(() => {
+  if (!product.value) return 0
+  if (selectedVariant.value) return selectedVariant.value.stock
+  return product.value.stock
 })
 
 const allImages = computed(() => {
@@ -251,6 +319,51 @@ const buyNow = () => {
   color: #bbb;
 }
 
+.weight-info {
+  background: #f0f4f8;
+  color: #4a5568;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.variants-section {
+  margin-bottom: 2rem;
+}
+
+.variants-section label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  color: #666;
+}
+
+.variant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.variant-chip {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid #eee;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.variant-chip:hover { border-color: var(--secondary); }
+.variant-chip.active {
+  border-color: var(--secondary);
+  background: var(--secondary);
+  color: white;
+}
+
 .save-tag {
   background: var(--accent);
   color: white;
@@ -335,6 +448,96 @@ const buyNow = () => {
   line-height: 2;
   color: #444;
   font-size: 1.05rem;
+}
+
+/* Artisan Heritage Styles */
+.artisan-heritage {
+  background-color: #faf9f6; /* Off-white Canva background */
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.heritage-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+}
+
+.heritage-text {
+  padding: 4rem;
+}
+
+.heritage-label {
+  display: inline-block;
+  color: var(--secondary);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.heritage-text h2 {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.heritage-text p {
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+.heritage-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.h-feature strong {
+  display: block;
+  color: #5c4033; /* Walnut Brown */
+  margin-bottom: 0.5rem;
+}
+
+.h-feature p {
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+.heritage-visual {
+  position: relative;
+  height: 100%;
+}
+
+.heritage-img-wrapper {
+  position: relative;
+  height: 600px;
+}
+
+.heritage-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-overlay-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(250,249,246,1), rgba(250,249,246,0));
+}
+
+@media (max-width: 992px) {
+  .heritage-grid { grid-template-columns: 1fr; }
+  .heritage-text { padding: 2rem; }
+  .heritage-img-wrapper { height: 400px; }
+  .img-overlay-accent {
+    background: linear-gradient(to bottom, rgba(250,249,246,1), rgba(250,249,246,0));
+  }
 }
 
 .mt-4 { margin-top: 4rem; }

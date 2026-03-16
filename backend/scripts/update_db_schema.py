@@ -49,6 +49,55 @@ def update_schema():
         except Exception as e:
             print(f"Error creating 'product_images' table: {e}")
         
+        try:
+            # Check if order columns exist
+            cols = db.session.execute(db.text("SHOW COLUMNS FROM orders")).fetchall()
+            col_names = [c[0] for c in cols]
+            
+            if 'prepaid_amount' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN prepaid_amount FLOAT DEFAULT 0.0"))
+                print("Added 'prepaid_amount' column.")
+            
+            if 'balance_on_delivery' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN balance_on_delivery FLOAT DEFAULT 0.0"))
+                print("Added 'balance_on_delivery' column.")
+                
+        except Exception as e:
+            print(f"Error updating 'orders' table: {e}")
+
+        try:
+            # Check if columns exist first
+            cols = db.session.execute(db.text("SHOW COLUMNS FROM products")).fetchall()
+            col_names = [c[0] for c in cols]
+            
+            if 'weight_grams' not in col_names:
+                db.session.execute(db.text("ALTER TABLE products ADD COLUMN weight_grams INT DEFAULT 0"))
+                print("Added 'weight_grams' column.")
+            
+            if 'attributes' not in col_names:
+                db.session.execute(db.text("ALTER TABLE products ADD COLUMN attributes JSON"))
+                print("Added 'attributes' column.")
+                
+        except Exception as e:
+            print(f"Error updating 'products' table: {e}")
+
+        try:
+            # Create product_variants table
+            db.session.execute(db.text("""
+                CREATE TABLE IF NOT EXISTS product_variants (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    product_id INT,
+                    name VARCHAR(50) NOT NULL,
+                    price_modifier FLOAT DEFAULT 0.0,
+                    stock INT DEFAULT 0,
+                    sku VARCHAR(50) UNIQUE,
+                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+                )
+            """))
+            print("Created 'product_variants' table.")
+        except Exception as e:
+            print(f"Error creating 'product_variants' table: {e}")
+        
         db.session.commit()
         print("Schema update complete.")
 

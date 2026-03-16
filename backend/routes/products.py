@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, Product, Category, ProductImage
+from models import db, Product, Category, ProductImage, ProductVariant
 from .auth import token_required, admin_required
 
 products_bp = Blueprint('products', __name__)
@@ -115,7 +115,17 @@ def get_products():
         'stock': p.stock,
         'image_url': p.image_url,
         'category': p.category.name if p.category else None,
-        'images': [img.image_url for img in p.images]
+        'category_id': p.category_id,
+        'images': [img.image_url for img in p.images],
+        'weight_grams': p.weight_grams,
+        'attributes': p.attributes,
+        'variants': [{
+            'id': v.id,
+            'name': v.name,
+            'price_modifier': v.price_modifier,
+            'stock': v.stock,
+            'sku': v.sku
+        } for v in p.variants]
     } for p in products])
 
 @products_bp.route('/<int:id>', methods=['GET'])
@@ -132,7 +142,16 @@ def get_product(id):
         'stock': product.stock,
         'image_url': product.image_url,
         'category_id': product.category_id,
-        'images': [img.image_url for img in product.images]
+        'images': [img.image_url for img in product.images],
+        'weight_grams': product.weight_grams,
+        'attributes': product.attributes,
+        'variants': [{
+            'id': v.id,
+            'name': v.name,
+            'price_modifier': v.price_modifier,
+            'stock': v.stock,
+            'sku': v.sku
+        } for v in product.variants]
     })
 
 @products_bp.route('/', methods=['POST'])
@@ -140,16 +159,28 @@ def get_product(id):
 @admin_required
 def create_product(current_user):
     data = request.get_json()
+    name = data.get('name')
+    slug = data.get('slug') or name.lower().replace(' ', '-')
+    
+    # Unique slug check
+    base_slug = slug
+    counter = 1
+    while Product.query.filter_by(slug=slug).first():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
     new_product = Product(
-        name=data.get('name'),
-        slug=data.get('slug') or data.get('name').lower().replace(' ', '-'),
+        name=name,
+        slug=slug,
         description=data.get('description'),
         details=data.get('details'),
         price=data.get('price'),
         discount_price=data.get('discount_price'),
         stock=data.get('stock', 0),
         image_url=data.get('image_url'),
-        category_id=data.get('category_id')
+        category_id=data.get('category_id'),
+        weight_grams=data.get('weight_grams', 0),
+        attributes=data.get('attributes', {})
     )
     
     # Handle additional images
@@ -157,6 +188,22 @@ def create_product(current_user):
     for url in additional_images:
         if url:
             new_product.images.append(ProductImage(image_url=url))
+
+    # Handle variants
+    variants_data = data.get('variants', [])
+    for v in variants_data:
+        if v.get('name'):
+            sku = v.get('sku')
+            if not sku:
+                import random
+                sku = f"SKU-{random.randint(100000, 999999)}"
+            
+            new_product.variants.append(ProductVariant(
+                name=v['name'],
+                price_modifier=v.get('price_modifier', 0.0),
+                stock=v.get('stock', 0),
+                sku=sku
+            ))
 
     db.session.add(new_product)
     db.session.commit()
@@ -178,6 +225,8 @@ def update_product(current_user, id):
     product.is_active = data.get('is_active', product.is_active)
     product.image_url = data.get('image_url', product.image_url)
     product.category_id = data.get('category_id', product.category_id)
+    product.weight_grams = data.get('weight_grams', product.weight_grams)
+    product.attributes = data.get('attributes', product.attributes)
     
     # Update additional images
     if 'additional_images' in data:
@@ -187,6 +236,19 @@ def update_product(current_user, id):
         for url in data.get('additional_images', []):
             if url:
                 db.session.add(ProductImage(product_id=id, image_url=url))
+
+    # Update variants
+    if 'variants' in data:
+        ProductVariant.query.filter_by(product_id=id).delete()
+        for v in data.get('variants', []):
+            if v.get('name'):
+                db.session.add(ProductVariant(
+                    product_id=id,
+                    name=v['name'],
+                    price_modifier=v.get('price_modifier', 0.0),
+                    stock=v.get('stock', 0),
+                    sku=v.get('sku')
+                ))
     
     db.session.commit()
     return jsonify({'message': 'Product updated successfully'})

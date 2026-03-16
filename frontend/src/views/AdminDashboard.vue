@@ -170,7 +170,7 @@
       </table>
     </div>
 
-    <!-- Add/Edit Modal (Simplified for prototype) -->
+    <!-- Add/Edit Modal (Global Store Ready) -->
     <div v-if="showAddModal" class="modal-overlay">
       <div class="modal-content">
         <h2>{{ editingId ? 'Edit Product' : 'Add New Product' }}</h2>
@@ -181,7 +181,7 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="prod-price">Price (₹)</label>
+              <label for="prod-price">Base Price (₹)</label>
               <input id="prod-price" v-model.number="form.price" type="number" required />
             </div>
             <div class="form-group">
@@ -191,18 +191,35 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="prod-stock">Stock</label>
+              <label for="prod-stock">Total Stock</label>
               <input id="prod-stock" v-model.number="form.stock" type="number" required />
             </div>
             <div class="form-group">
-              <label for="prod-category">Category</label>
-              <select id="prod-category" v-model="form.category_id" required>
-                <option v-for="cat in productStore.categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
+              <label for="prod-weight">Weight (grams)</label>
+              <input id="prod-weight" v-model.number="form.weight_grams" type="number" placeholder="e.g. 500" />
             </div>
           </div>
+          <div class="form-group">
+            <label for="prod-category">Category</label>
+            <select id="prod-category" v-model="form.category_id" required>
+              <option v-for="cat in productStore.categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- Variants Section -->
+          <div class="form-group">
+            <label>Product Variants (Size, Color, etc.)</label>
+            <div v-for="(v, idx) in form.variants" :key="idx" class="variant-input-row">
+              <input v-model="v.name" placeholder="Variant Name" class="flex-2" />
+              <input v-model.number="v.price_modifier" type="number" placeholder="+₹" class="flex-1" />
+              <input v-model.number="v.stock" type="number" placeholder="Stock" class="flex-1" />
+              <button type="button" @click="removeVariantField(idx)" class="btn-text delete">×</button>
+            </div>
+            <button type="button" @click="addVariantField" class="btn-text">+ Add Variant</button>
+          </div>
+
           <div class="form-group">
             <label for="prod-desc">Short Description</label>
             <textarea id="prod-desc" v-model="form.description" rows="2"></textarea>
@@ -276,7 +293,9 @@ const form = ref({
   category_id: null,
   description: '',
   image_url: '',
-  additional_images: []
+  additional_images: [],
+  weight_grams: 0,
+  variants: []
 })
 
 const catForm = ref({
@@ -301,6 +320,14 @@ const addImageField = () => {
 
 const removeImageField = (index) => {
   form.value.additional_images.splice(index, 1)
+}
+
+const addVariantField = () => {
+  form.value.variants.push({ name: '', price_modifier: 0, stock: 0 })
+}
+
+const removeVariantField = (index) => {
+  form.value.variants.splice(index, 1)
 }
 
 const openCategoryModal = (cat = null) => {
@@ -363,12 +390,18 @@ const editProduct = (product) => {
   editingId.value = product.id
   form.value = { 
     ...product,
-    additional_images: product.images ? [...product.images] : []
+    additional_images: product.images ? [...product.images] : [],
+    variants: product.variants ? [...product.variants] : []
   }
   showAddModal.value = true
 }
 
 const saveProduct = async () => {
+  // Ensure stock is a number
+  form.value.stock = Number(form.value.stock)
+  form.value.price = Number(form.value.price)
+  if (form.value.discount_price) form.value.discount_price = Number(form.value.discount_price)
+  
   let success
   if (editingId.value) {
     success = await productStore.updateProduct(editingId.value, form.value)
@@ -382,7 +415,18 @@ const saveProduct = async () => {
 const closeModal = () => {
   showAddModal.value = false
   editingId.value = null
-  form.value = { name: '', price: 0, discount_price: null, stock: 0, category_id: null, description: '', image_url: '', additional_images: [] }
+  form.value = { 
+    name: '', 
+    price: 0, 
+    discount_price: null, 
+    stock: 0, 
+    category_id: null, 
+    description: '', 
+    image_url: '', 
+    additional_images: [],
+    weight_grams: 0,
+    variants: []
+  }
 }
 </script>
 
@@ -399,15 +443,18 @@ const closeModal = () => {
   margin-bottom: 1.5rem;
 }
 
-.image-input-row {
+.image-input-row, .variant-input-row {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.image-input-row input {
+.image-input-row input, .variant-input-row input {
   flex-grow: 1;
 }
+
+.flex-2 { flex: 2; }
+.flex-1 { flex: 1; }
 
 .modal-form input, .modal-form select, .modal-form textarea {
   width: 100%;

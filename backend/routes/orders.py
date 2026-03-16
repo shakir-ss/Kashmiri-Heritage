@@ -30,13 +30,26 @@ def admin_get_all_orders(current_user):
 @token_required
 def place_order(current_user):
     data = request.get_json()
+    print(f"DEBUG PLACE ORDER DATA: {data}")
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
     
     if not cart_items:
+        print("DEBUG: Cart is empty for user", current_user.id)
         return jsonify({'message': 'Cart is empty'}), 400
 
-    # Calculate total and validate stock
-    total_amount = 0
+    address = data.get('address', '')
+    pincode = data.get('pincode', '')
+    payment_mode = data.get('payment_mode', 'upi')
+    
+    # Specific Local Pincodes List
+    LOCAL_PINCODES = ['190001', '190002', '190003', '190004', '190005', '190006', '190007', '190008', '190009', '190010']
+    
+    delivery_charge = 0
+    if pincode not in LOCAL_PINCODES:
+        delivery_charge = 50.0
+
+    # Calculate subtotal
+    subtotal = 0
     order_items_to_create = []
     
     for item in cart_items:
@@ -45,7 +58,7 @@ def place_order(current_user):
             return jsonify({'message': f'Not enough stock for {product.name}'}), 400
         
         price = product.discount_price or product.price
-        total_amount += price * item.quantity
+        subtotal += price * item.quantity
         
         # Deduct stock
         product.stock -= item.quantity
@@ -56,12 +69,23 @@ def place_order(current_user):
             price_at_purchase=price
         ))
 
+    total_amount = subtotal + delivery_charge
+    prepaid_amount = total_amount
+    balance_on_delivery = 0.0
+
+    # Handle Partial COD (30/70 rule)
+    if payment_mode == 'cod':
+        prepaid_amount = total_amount * 0.30
+        balance_on_delivery = total_amount * 0.70
+
     # Create Order
     new_order = Order(
         user_id=current_user.id,
         total_amount=total_amount,
-        status='paid', # Mocking immediate payment for prototype
-        address=data.get('address'),
+        prepaid_amount=prepaid_amount,
+        balance_on_delivery=balance_on_delivery,
+        status='paid' if payment_mode != 'cod' else 'partial_paid',
+        address=f"{address} (PIN: {pincode})",
         phone=data.get('phone'),
         payment_id=data.get('payment_id', 'MOCK_PAYMENT_ID')
     )

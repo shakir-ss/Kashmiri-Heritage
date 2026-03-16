@@ -46,8 +46,20 @@ class Product(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     details = db.Column(db.Text) # Rich details about the product
+    weight_grams = db.Column(db.Integer, default=0)
+    attributes = db.Column(db.JSON) # Category-specific data (size, material, expiry)
     
     images = db.relationship('ProductImage', backref='product', lazy=True, cascade="all, delete-orphan")
+    variants = db.relationship('ProductVariant', backref='product', lazy=True, cascade="all, delete-orphan")
+
+class ProductVariant(db.Model):
+    __tablename__ = 'product_variants'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False) # e.g., "Large", "Red", "500g"
+    price_modifier = db.Column(db.Float, default=0.0) # Added to base product price
+    stock = db.Column(db.Integer, default=0)
+    sku = db.Column(db.String(50), unique=True)
 
 class ProductImage(db.Model):
     __tablename__ = 'product_images'
@@ -71,13 +83,15 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
+    prepaid_amount = db.Column(db.Float, default=0.0)
+    balance_on_delivery = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='pending') # pending, paid, shipped, cancelled
     payment_id = db.Column(db.String(100))
     address = db.Column(db.Text, nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    items = db.relationship('OrderItem', backref='order', lazy=True, cascade="all, delete-orphan")
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'

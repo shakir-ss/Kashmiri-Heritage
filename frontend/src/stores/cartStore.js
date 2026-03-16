@@ -42,6 +42,7 @@ export const useCartStore = defineStore('cart', {
 
       if (auth.isAuthenticated) {
         await axios.post('/api/cart/add', { product_id: product.id, quantity })
+        await this.syncWithBackend()
       }
     },
 

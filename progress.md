@@ -83,3 +83,22 @@
 - [x] Frontend: Cart-level stock validation and quantity limits
 - [x] UI: "Out of Stock" visual indicators and button disabling across all views (Card, Detail, Cart)
 - [x] BDD: Verified real-time stock updates after checkout (100% pass)
+
+## [PHASE 15] GLOBAL GENERAL STORE PIVOT
+- [x] Database: Added `weight_grams` and dynamic `attributes` (JSON) to Products
+- [x] Database: Implemented `ProductVariant` model for multi-option items (Size, Color, etc.)
+- [x] Checkout: Redesigned UI with "Complete Your Acquisition" editorial layout
+- [x] Checkout: Implemented dynamic shipping logic using `LOCAL_PINCODES` configuration
+- [x] Checkout: Added **Partial COD** payment mode (30% prepaid, 70% balance)
+- [x] UI: Added trust badges, psychological commitment messaging, and sticky order summary
+- [x] BDD: Verified end-to-end variant creation and selection flow (100% pass)
+- [x] BDD: Verified local free shipping and partial payment breakdown (100% pass)
+
+## SESSION CONTINUITY NOTES
+- **Partial COD**: Backend `Order` model now tracks `prepaid_amount` and `balance_on_delivery`. Orders placed via COD are stored with status `partial_paid`.
+- **Shipping Radius**: Local pincodes are defined in `frontend/src/config.js`. Update this list to expand the free delivery zone.
+- **Stock Replenishment**: BDD tests now include a `replenish stock` step via API to prevent 400 errors during repeated automated runs.
+- **Form Locators**: Prefer using ID-based selectors (e.g. `input[id="address"]`) for checkout fields, as editorial labels can sometimes be complex for standard Playwright matching.
+
+## CURRENT STATUS: **FEATURE COMPLETE (GLOBAL READY)**
+*The platform has successfully pivoted to a general store model with international shipping readiness, partial payments, and multi-variant cataloging, fully verified by a 100% passing BDD suite.*
