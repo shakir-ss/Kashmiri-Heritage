@@ -35,10 +35,13 @@ Feature: Cart and Checkout
         And I fill in "Full Name" with "Local Customer"
         And I fill in "Phone Number" with "+91 9988776655"
         And I fill in "Shipping Address" with "Srinagar Downtown"
-        And I fill in "Pincode" with "190001"
+        And I fill in "City" with "Srinagar"
+        And I fill in "Area Pincode" with "190001"
         Then I should see "COMPLIMENTARY" in delivery charges
+        When I agree to the terms
         And I click the modal button "Authorize Full Payment"
         Then I should see "Order Secured Successfully!"
+
 
     @ui @regression @payments
     Scenario: Verify Partial COD commitment messaging and breakdown
@@ -47,11 +50,23 @@ Feature: Cart and Checkout
         When I add "Mamra Almonds" to the cart
         And I go to the Cart page
         And I click the modal button "Proceed to Checkout"
-        And I fill in "Pincode" with "110001"
+        And I fill in "City" with "Delhi"
+        And I fill in "Area Pincode" with "110001"
         When I select payment mode "Partial COD (Trust & Commitment)"
         Then I should see "Due Today (30%)"
         And I should see "Pay on Arrival (70%)"
         And I should see "Smart Choice!"
+
+    @ui @regression @compliance
+    Scenario: Verify terms agreement is mandatory for checkout
+        Given I am logged in as admin on the UI
+        And I am on the Home page
+        When I add "Mamra Almonds" to the cart
+        And I go to the Cart page
+        And I click the modal button "Proceed to Checkout"
+        When I click the modal button "Authorize Full Payment"
+        Then I should see "Please agree to terms"
+
 
     @ui @regression
     Scenario: Navigate to product detail from cart

@@ -53,4 +53,3 @@ def step_impl(context):
 
     first_row_text = rows.first.inner_text()
     assert "No orders placed yet" not in first_row_text, f"Expected orders but found: {first_row_text}"
-

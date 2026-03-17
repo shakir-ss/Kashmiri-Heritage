@@ -18,7 +18,7 @@
         
         <div class="nav-links">
           <router-link to="/products">Products</router-link>
-          <router-link to="/products?category=handicrafts">Handicrafts</router-link>
+          <!-- <router-link to="/products?category=handicrafts">Handicrafts</router-link> -->
           
           <div class="nav-actions">
             <router-link to="/wishlist" class="nav-icon-link" title="Wishlist">

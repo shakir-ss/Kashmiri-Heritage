@@ -19,14 +19,24 @@ def step_impl(context):
     context.page.fill('input[type="email"]', "root@kashmiridryfruits.com")
     context.page.fill('input[type="password"]', "root123")
     context.page.click('button:has-text("Login")')
-    context.page.wait_for_url(f"{context.base_ui_url}/")
+    
+    # Wait for navigation or error
+    try:
+        context.page.wait_for_url(f"{context.base_ui_url}/", timeout=10000)
+    except Exception as e:
+        # Check if there's an error message on the page
+        error_locator = context.page.locator('.error-message')
+        if error_locator.is_visible():
+            print(f"LOGIN FAILED: {error_locator.inner_text()}")
+        context.page.screenshot(path="error_login_failed.png")
+        raise e
     
     # Capture token from localStorage for any following API steps
     context.token = context.page.evaluate("window.localStorage.getItem('token')")
     if context.token:
         context.api_session.headers.update({"Authorization": f"Bearer {context.token}"})
-
 @then('the status code should be {status_code:d}')
 def step_impl(context, status_code):
     assert context.response.status_code == status_code, \
         f"Expected {status_code} but got {context.response.status_code}. Response: {context.response.text}"
+

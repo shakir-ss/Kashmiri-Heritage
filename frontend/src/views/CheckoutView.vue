@@ -16,25 +16,76 @@
         <section class="checkout-form card">
           <h3 class="subsection-title">1. Shipping Destination</h3>
           <div class="form-body">
-            <div class="form-group">
-              <label for="full-name">Full Name</label>
-              <input id="full-name" v-model="form.name" type="text" placeholder="Recipient's Name" required />
-            </div>
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input id="phone" v-model="form.phone" type="tel" placeholder="+91 XXXX XXX XXX" required />
-            </div>
             <div class="form-row">
-              <div class="form-group flex-2">
-                <label for="address">Shipping Address</label>
-                <input id="address" v-model="form.address" placeholder="House/Apt No, Street, Landmark" required />
+              <div class="form-group flex-1">
+                <label for="full-name">Full Name</label>
+                <div class="input-wrapper" :class="{ 'error': errors.name }">
+                  <span class="input-icon">👤</span>
+                  <input id="full-name" v-model="form.name" type="text" placeholder="Recipient's Name" @blur="validateField('name')" />
+                </div>
+                <span class="error-text" v-if="errors.name">{{ errors.name }}</span>
               </div>
               <div class="form-group flex-1">
-                <label for="pincode">Area Pincode</label>
-                <input id="pincode" v-model="form.pincode" type="text" placeholder="190001" required @input="updateShipping" />
+                <label for="phone">Phone Number</label>
+                <div class="input-wrapper" :class="{ 'error': errors.phone }">
+                  <span class="input-icon">📞</span>
+                  <input id="phone" v-model="form.phone" type="tel" placeholder="+91XXXXXXXXXX" @blur="validateField('phone')" />
+                </div>
+                <span class="error-text" v-if="errors.phone">{{ errors.phone }}</span>
               </div>
             </div>
 
+            <div class="form-group">
+              <label for="address">Street Address</label>
+              <div class="input-wrapper" :class="{ 'error': errors.address }">
+                <span class="input-icon">🏠</span>
+                <input id="address" v-model="form.address" placeholder="House/Apt No, Street, Landmark" @blur="validateField('address')" />
+              </div>
+              <span class="error-text" v-if="errors.address">{{ errors.address }}</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="country">Country</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">🌍</span>
+                  <select id="country" v-model="form.country" @change="validateField('country')">
+                    <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group flex-1">
+                <label for="state">State / Province</label>
+                <div class="input-wrapper" :class="{ 'error': errors.state }">
+                  <span class="input-icon">🏛️</span>
+                  <select v-if="form.country === 'India'" id="state" v-model="form.state">
+                    <option v-for="s in indianStates" :key="s" :value="s">{{ s }}</option>
+                  </select>
+                  <input v-else id="state" v-model="form.state" placeholder="State/Province" @blur="validateField('state')" />
+                </div>
+                <span class="error-text" v-if="errors.state">{{ errors.state }}</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="city">City</label>
+                <div class="input-wrapper" :class="{ 'error': errors.city }">
+                  <span class="input-icon">🏙️</span>
+                  <input id="city" v-model="form.city" placeholder="City" @blur="validateField('city')" />
+                </div>
+                <span class="error-text" v-if="errors.city">{{ errors.city }}</span>
+              </div>
+              <div class="form-group flex-1">
+                <label for="pincode">Area Pincode</label>
+                <div class="input-wrapper" :class="{ 'error': errors.pincode }">
+                  <span class="input-icon">📮</span>
+                  <input id="pincode" v-model="form.pincode" type="text" placeholder="190001" @input="updateShipping" @blur="validateField('pincode')" />
+                </div>
+                <span class="error-text" v-if="errors.pincode">{{ errors.pincode }}</span>
+                <small class="hint-text" v-if="form.pincode.length >= 6 && deliveryCharge === 0">✨ Local Pincode Detected: Complimentary Shipping Applied</small>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -71,6 +122,26 @@
             <div class="info-icon">💡</div>
             <div class="info-text">
               <strong>Smart Choice!</strong> By paying a small 30% commitment fee today (₹{{ prepaidAmount.toFixed(0) }}), you help us ensure these artisanal products are handled with priority care.
+            </div>
+          </div>
+
+          <div class="form-group mt-2">
+            <label class="checkbox-container">
+              <input type="checkbox" v-model="form.agreed" />
+              <span class="checkmark"></span>
+              <span class="checkbox-label">I agree to the Terms of Service and acknowledge the 30% commitment fee for Partial COD.</span>
+            </label>
+            <span class="error-text" v-if="errors.agreed">{{ errors.agreed }}</span>
+          </div>
+
+          <div class="payment-trust-footer mt-2">
+            <div class="payment-icons">
+              <img v-show="false" src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" />
+              <img v-show="false" src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Phonepe.svg" alt="PhonePe" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" />
             </div>
           </div>
 
@@ -114,6 +185,13 @@
               <span>₹{{ total }}</span>
             </div>
 
+            <!-- Estimated Delivery -->
+            <div class="estimated-delivery mt-2">
+              <div class="est-label">📅 Estimated Arrival</div>
+              <div class="est-date">{{ estimatedDate }}</div>
+              <small class="est-hint">Via Priority Artisan Logistics</small>
+            </div>
+
             <!-- Breakdown for Partial COD -->
             <div v-if="form.payment_mode === 'cod'" class="payment-breakdown mt-2">
               <div class="breakdown-row highlight">
@@ -139,22 +217,78 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCartStore } from '../stores/cartStore'
+import { useAuthStore } from '../stores/authStore'
 import { LOCAL_PINCODES } from '../config'
 import axios from 'axios'
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 const loading = ref(false)
 const successOrder = ref(null)
+
+const countries = ['India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Canada', 'Australia']
+const indianStates = [
+  'Jammu & Kashmir', 'Delhi', 'Maharashtra', 'Karnataka', 'Punjab', 'Kerala', 'Ladakh'
+]
 
 const form = ref({
   name: '',
   phone: '',
   address: '',
+  city: '',
+  state: 'Jammu & Kashmir',
+  country: 'India',
   pincode: '',
-  payment_mode: 'upi'
+  payment_mode: 'upi',
+  agreed: false
 })
+
+const errors = ref({
+  name: '',
+  phone: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
+  agreed: ''
+})
+
+// Auto-fill from user profile
+onMounted(() => {
+  if (authStore.isAuthenticated && authStore.user) {
+    form.value.name = authStore.user.name || ''
+  }
+})
+
+const validateField = (field) => {
+  errors.value[field] = ''
+  
+  if (field === 'name' && !form.value.name) errors.value.name = 'Full name is required'
+  if (field === 'phone') {
+    const phoneRegex = /^[0-9+\s]{10,20}$/
+    if (!form.value.phone) errors.value.phone = 'Phone number is required'
+    else if (!phoneRegex.test(form.value.phone)) errors.value.phone = 'Invalid phone format'
+  }
+  if (field === 'address' && !form.value.address) errors.value.address = 'Street address is required'
+  if (field === 'city' && !form.value.city) errors.value.city = 'City is required'
+  if (field === 'pincode') {
+    if (!form.value.pincode) errors.value.pincode = 'Pincode is required'
+    else if (form.value.pincode.length < 5) errors.value.pincode = 'Pincode too short'
+  }
+  if (field === 'agreed' && !form.value.agreed) errors.value.agreed = 'Please agree to terms'
+}
+
+const validateAll = () => {
+  validateField('name')
+  validateField('phone')
+  validateField('address')
+  validateField('city')
+  validateField('pincode')
+  validateField('agreed')
+  return !Object.values(errors.value).some(e => e !== '')
+}
 
 const subtotal = computed(() => {
   return cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -171,6 +305,21 @@ const updateShipping = () => {
     }
   }
 }
+
+const estimatedDate = computed(() => {
+  const today = new Date()
+  const startDays = deliveryCharge.value === 0 ? 2 : 5
+  const endDays = deliveryCharge.value === 0 ? 4 : 8
+  
+  const startDate = new Date(today)
+  startDate.setDate(today.getDate() + startDays)
+  
+  const endDate = new Date(today)
+  endDate.setDate(today.getDate() + endDays)
+  
+  const options = { month: 'short', day: 'numeric' }
+  return `${startDate.toLocaleDateString('en-IN', options)} - ${endDate.toLocaleDateString('en-IN', options)}`
+})
 
 const total = computed(() => subtotal.value + deliveryCharge.value)
 
@@ -191,16 +340,16 @@ const balanceAmount = computed(() => {
 
 const handleCheckout = async () => {
   if (cartStore.items.length === 0) return
-  if (!form.value.name || !form.value.address || !form.value.pincode) {
-    alert('Please complete all shipping fields.')
-    return
-  }
+  if (!validateAll()) return
   
   loading.value = true
   try {
     const res = await axios.post('/api/orders/place', {
       name: form.value.name,
       address: form.value.address,
+      city: form.value.city,
+      state: form.value.state,
+      country: form.value.country,
       pincode: form.value.pincode,
       phone: form.value.phone,
       payment_mode: form.value.payment_mode
@@ -251,7 +400,149 @@ const handleCheckout = async () => {
 .form-body {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-2 { flex: 2; }
+.flex-1 { flex: 1; }
+
+.form-group label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.1rem;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.input-wrapper input, .input-wrapper select {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.input-wrapper select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23aaa' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+.input-wrapper.error input {
+  border-color: #d00;
+}
+
+.input-wrapper input:focus, .input-wrapper select:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(244, 196, 48, 0.1);
+}
+
+.error-text {
+  color: #d00;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+
+.hint-text {
+  display: block;
+  margin-top: 0.5rem;
+  color: #1e7e34;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* Checkbox Styles */
+.checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 22px;
+  width: 22px;
+  background-color: #eee;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: var(--secondary);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 8px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label {
+  line-height: 1.4;
+  color: #666;
 }
 
 .payment-methods {
@@ -286,6 +577,7 @@ const handleCheckout = async () => {
 
 .payment-option input {
   margin-top: 0.25rem;
+  accent-color: var(--secondary);
 }
 
 .opt-content {
@@ -317,6 +609,23 @@ const handleCheckout = async () => {
 
 .info-icon { font-size: 1.5rem; }
 .info-text { font-size: 0.9rem; color: #856404; line-height: 1.5; }
+
+.payment-trust-footer {
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1.5rem;
+}
+
+.payment-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  opacity: 0.6;
+}
+
+.payment-icons img {
+  height: 24px;
+}
 
 .order-summary {
   position: sticky;
@@ -368,6 +677,35 @@ const handleCheckout = async () => {
 
 .free-shipping { color: #1e7e34; font-weight: 800; }
 
+.estimated-delivery {
+  background: #f0f7ff;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+  border: 1px solid #cfe2ff;
+}
+
+.est-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #0056b3;
+  margin-bottom: 0.25rem;
+}
+
+.est-date {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.est-hint {
+  font-size: 0.7rem;
+  color: #6c757d;
+  display: block;
+  margin-top: 0.25rem;
+}
+
 .payment-breakdown {
   background: #f8f9fa;
   padding: 1.25rem;
@@ -404,6 +742,7 @@ const handleCheckout = async () => {
 .success-icon { font-size: 5rem; color: #1e7e34; margin-bottom: 2rem; }
 
 @media (max-width: 1024px) {
-  .checkout-grid { grid-template-columns: 1fr; }
+  .checkout-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .form-row { flex-direction: column; gap: 1.25rem; }
 }
 </style>

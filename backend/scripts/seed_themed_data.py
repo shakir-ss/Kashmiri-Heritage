@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import create_app
-from models import db, Category, Product, Analytics, CartItem, OrderItem
+from models import db, Category, Product, Analytics, CartItem, OrderItem, WishlistItem, ProductVariant, ProductImage
 
 app = create_app('dev')
 
@@ -14,6 +14,9 @@ def seed():
         Analytics.query.delete()
         CartItem.query.delete()
         OrderItem.query.delete()
+        WishlistItem.query.delete()
+        ProductVariant.query.delete()
+        ProductImage.query.delete()
         # Now clear parent tables
         Product.query.delete()
         Category.query.delete()

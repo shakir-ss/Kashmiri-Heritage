@@ -62,6 +62,9 @@ def step_impl(context, address, phone):
     payload = {
         "address": address, 
         "phone": phone,
+        "city": "Srinagar",
+        "state": "Jammu & Kashmir",
+        "country": "India",
         "pincode": "190001",
         "payment_mode": "upi"
     }
@@ -120,9 +123,12 @@ def step_impl(context, address, phone):
     context.page.locator('input[id="phone"]').fill(phone)
 
 @then('I should see "{message}"')
+@when('I should see "{message}"')
 def step_impl(context, message):
     try:
-        # Wait a bit longer for the mock payment + backend call
+        # Wait for any pending network requests (like the order POST)
+        context.page.wait_for_load_state("networkidle")
+        # Extra buffer for UI transitions
         context.page.wait_for_timeout(2000)
         expect(context.page.get_by_text(message).first).to_be_visible(timeout=15000)
     except Exception as e:
@@ -152,12 +158,10 @@ def step_impl(context, mode_label):
     opt.scroll_into_view_if_needed()
     opt.click()
 
-@then('I click the modal button "Authorize Full Payment"')
+@when('I agree to the terms')
 def step_impl(context):
-    btn = context.page.get_by_role("button", name="Authorize Full Payment")
-    btn.scroll_into_view_if_needed()
-    btn.click()
-    context.page.wait_for_timeout(2000)
+    # Click the checkbox container which is clickable
+    context.page.locator('.checkbox-container').click()
 
 @then('I should be on the detail page for "{name}"')
 def step_impl(context, name):

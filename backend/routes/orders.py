@@ -15,8 +15,14 @@ def admin_get_all_orders(current_user):
         'customer_name': o.user.name,
         'customer_email': o.user.email,
         'total_amount': o.total_amount,
+        'prepaid_amount': o.prepaid_amount or 0.0,
+        'balance_on_delivery': o.balance_on_delivery or 0.0,
         'status': o.status,
         'address': o.address,
+        'city': o.city or 'Srinagar',
+        'state': o.state or 'Jammu & Kashmir',
+        'country': o.country or 'India',
+        'pincode': o.pincode or '190001',
         'phone': o.phone,
         'created_at': o.created_at,
         'items': [{
@@ -85,7 +91,11 @@ def place_order(current_user):
         prepaid_amount=prepaid_amount,
         balance_on_delivery=balance_on_delivery,
         status='paid' if payment_mode != 'cod' else 'partial_paid',
-        address=f"{address} (PIN: {pincode})",
+        address=address,
+        city=data.get('city'),
+        state=data.get('state'),
+        country=data.get('country', 'India'),
+        pincode=pincode,
         phone=data.get('phone'),
         payment_id=data.get('payment_id', 'MOCK_PAYMENT_ID')
     )

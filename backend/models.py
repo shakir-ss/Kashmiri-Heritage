@@ -87,7 +87,11 @@ class Order(db.Model):
     balance_on_delivery = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='pending') # pending, paid, shipped, cancelled
     payment_id = db.Column(db.String(100))
-    address = db.Column(db.Text, nullable=False)
+    address = db.Column(db.Text, nullable=False) # Street address
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    country = db.Column(db.String(100), default='India')
+    pincode = db.Column(db.String(20), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

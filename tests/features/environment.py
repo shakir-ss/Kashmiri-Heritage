@@ -4,7 +4,7 @@ import requests
 def before_all(context):
     # Setup Playwright for UI tests
     context.playwright = sync_playwright().start()
-    context.browser = context.playwright.chromium.launch(headless=False)
+    context.browser = context.playwright.chromium.launch(headless=True)
     
     # Base URLs
     context.base_api_url = "http://localhost:5000/api"

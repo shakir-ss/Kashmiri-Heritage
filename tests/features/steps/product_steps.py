@@ -271,6 +271,8 @@ def step_impl(context, label, value):
         context.page.locator('input[id="phone"]').fill(value)
     elif label == "Shipping Address":
         context.page.locator('input[id="address"]').fill(value)
+    elif label == "City":
+        context.page.locator('input[id="city"]').fill(value)
     elif label == "Area Pincode" or label == "Pincode":
         context.page.wait_for_selector('input[id="pincode"]', state='visible', timeout=10000)
         context.page.locator('input[id="pincode"]').fill(value)
@@ -328,6 +330,7 @@ def step_impl(context, price):
 
 @when('I click the modal button "{button_text}"')
 @given('I click the modal button "{button_text}"')
+@then('I click the modal button "{button_text}"')
 def step_impl(context, button_text):
     # Try multiple ways to find the button
     try:

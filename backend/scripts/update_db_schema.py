@@ -61,6 +61,22 @@ def update_schema():
             if 'balance_on_delivery' not in col_names:
                 db.session.execute(db.text("ALTER TABLE orders ADD COLUMN balance_on_delivery FLOAT DEFAULT 0.0"))
                 print("Added 'balance_on_delivery' column.")
+
+            if 'city' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN city VARCHAR(100)"))
+                print("Added 'city' column.")
+
+            if 'state' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN state VARCHAR(100)"))
+                print("Added 'state' column.")
+
+            if 'country' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN country VARCHAR(100) DEFAULT 'India'"))
+                print("Added 'country' column.")
+
+            if 'pincode' not in col_names:
+                db.session.execute(db.text("ALTER TABLE orders ADD COLUMN pincode VARCHAR(20)"))
+                print("Added 'pincode' column.")
                 
         except Exception as e:
             print(f"Error updating 'orders' table: {e}")

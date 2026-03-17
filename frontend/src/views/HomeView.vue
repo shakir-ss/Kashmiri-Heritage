@@ -1,16 +1,27 @@
 <template>
   <div class="home-wrapper">
     <!-- Hero Section -->
-    <header class="hero">
+    <header class="hero" :class="{ 'hero-walnut': showWalnutBanner }">
       <div class="hero-overlay"></div>
       <div class="container hero-content">
-        <div class="hero-badge">Authentic & Handcrafted</div>
-        <h1>Bringing the Heart of <span>Kashmir</span> to Your Home</h1>
-        <p>Premium dry fruits, exquisite Pashminas, and timeless handicrafts sourced directly from the valleys of Kashmir.</p>
-        <div class="hero-actions">
-          <router-link to="/products" class="btn btn-secondary">Shop Collection</router-link>
-          <a href="#featured" class="btn btn-outline-white">Explore Crafts</a>
-        </div>
+        <template v-if="showWalnutBanner">
+          <div class="hero-badge">Special Harvest</div>
+          <h1>Premium Kashmiri <span>Walnuts</span></h1>
+          <p>Sourced from the sun-drenched orchards of Ganderbal. Organic, crunchy, and packed with the goodness of nature.</p>
+          <div class="hero-actions">
+            <router-link to="/products?search=Walnut" class="btn btn-secondary">Shop Walnuts</router-link>
+            <button @click="showWalnutBanner = false" class="btn btn-outline-white">Discover More</button>
+          </div>
+        </template>
+        <template v-else>
+          <div class="hero-badge">Authentic & Handcrafted</div>
+          <h1>Bringing the Heart of <span>Kashmir</span> to Your Home</h1>
+          <p>Premium dry fruits, exquisite Pashminas, and timeless handicrafts sourced directly from the valleys of Kashmir.</p>
+          <div class="hero-actions">
+            <router-link to="/products" class="btn btn-secondary">Shop Collection</router-link>
+            <button @click="showWalnutBanner = true" class="btn btn-outline-white">Special Offers</button>
+          </div>
+        </template>
       </div>
     </header>
 
@@ -63,12 +74,13 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 
 const productStore = useProductStore()
 const cartStore = useCartStore()
+const showWalnutBanner = ref(false)
 
 const b64_img = (color_hex) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23${color_hex}'/%3E%3C/svg%3E`
 
@@ -98,6 +110,13 @@ const addToCart = (product) => {
   align-items: center;
   color: white;
   margin-top: -80px; /* Offset for transparent navbar if needed */
+  transition: background-image 0.5s ease-in-out;
+}
+
+.hero-walnut {
+  /* background-image: url("https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg"); 
+  /* Using the @ alias which points to src */
+  background-image: url("@/assets/wallnuts/walnut-banner.jpg");
 }
 
 .hero-overlay {
