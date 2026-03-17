@@ -1,5 +1,5 @@
 Feature: Inventory and Stock Management
-    As a customer or admin of the Kashmiri Dry Fruits platform
+    As a customer or admin of the Kashmiri Heritage platform
     I want stock levels to be accurately tracked and reflected
     So that I don't order items that are unavailable
 

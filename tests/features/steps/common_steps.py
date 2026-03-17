@@ -4,7 +4,7 @@ import requests
 @given('I am logged in as admin via API')
 def step_impl(context):
     payload = {
-        "email": "root@kashmiridryfruits.com",
+        "email": "root@kashmiriheritage.com",
         "password": "root123"
     }
     response = context.api_session.post(f"{context.base_api_url}/auth/login", json=payload)
@@ -16,7 +16,7 @@ def step_impl(context):
 def step_impl(context):
     context.page.goto(f"{context.base_ui_url}/login")
     context.page.evaluate("window.localStorage.clear()")
-    context.page.fill('input[type="email"]', "root@kashmiridryfruits.com")
+    context.page.fill('input[type="email"]', "root@kashmiriheritage.com")
     context.page.fill('input[type="password"]', "root123")
     context.page.click('button:has-text("Login")')
     

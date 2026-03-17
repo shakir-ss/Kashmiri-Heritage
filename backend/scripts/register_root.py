@@ -11,7 +11,7 @@ def create_admin_user():
     with app.app_context():
         print("Registering root admin user...")
         # Check if user already exists
-        email = "root@kashmiridryfruits.com"
+        email = "root@kashmiriheritage.com"
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             print(f"User with email {email} already exists.")

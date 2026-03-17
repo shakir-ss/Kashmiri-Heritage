@@ -1,4 +1,4 @@
-# Product Guidelines - Kashmiri Dry Fruits
+# Product Guidelines - Kashmiri Heritage
 
 ## Visual Identity
 - **Aesthetic:** Organic, Premium, Natural.

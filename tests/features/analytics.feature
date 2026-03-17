@@ -1,5 +1,5 @@
 Feature: Analytics
-    As an admin of the Kashmiri Dry Fruits platform
+    As an admin of the Kashmiri Heritage platform
     I want to track product views and see shop stats
 
     @api @smoke @positive

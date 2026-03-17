@@ -14,7 +14,7 @@
     <!-- Navbar -->
     <nav class="navbar" :class="{ 'nav-scrolled': scrolly > 50 }">
       <div class="container nav-content">
-        <router-link to="/" class="logo">Kashmiri <span>Dry Fruits</span></router-link>
+        <router-link to="/" class="logo">Kashmiri <span>Heritage</span></router-link>
         
         <div class="nav-links">
           <router-link to="/products">Products</router-link>
@@ -48,7 +48,7 @@
     <footer class="footer">
       <div class="container footer-grid">
         <div class="footer-brand">
-          <router-link to="/" class="logo white">Kashmiri <span>Dry Fruits</span></router-link>
+          <router-link to="/" class="logo white">Kashmiri <span>Heritage</span></router-link>
           <p>Preserving the heritage of the Valley through authentic products and artisanal crafts. Sourced with care, delivered with love.</p>
         </div>
         <div class="footer-links">
@@ -67,7 +67,7 @@
         </div>
       </div>
       <div class="container footer-bottom">
-        <p>© 2026 Kashmiri Dry Fruits. Artisanal Quality from the Heart of the Valley.</p>
+        <p>© 2026 Kashmiri Heritage. Artisanal Quality from the Heart of the Valley.</p>
       </div>
     </footer>
   </div>

@@ -1,4 +1,4 @@
-# Tech Stack - Kashmiri Dry Fruits
+# Tech Stack - Kashmiri Heritage
 
 ## Backend
 - **Language/Framework:** Python (Flask)

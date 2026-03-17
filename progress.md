@@ -1,4 +1,4 @@
-# Kashmiri Dry Fruits - Project Progress Tracker
+# Kashmiri Heritage - Project Progress Tracker
 
 ## [PHASE 1] SETUP (Core Infrastructure)
 - [x] Backend Boilerplate (Flask/CORS/Bcrypt)

@@ -29,7 +29,7 @@ def create_app(config_name):
     app.register_blueprint(wishlist_bp, url_prefix='/api/wishlist')
     @app.route('/health', methods=['GET'])
     def health_check():
-        return jsonify({"status": "healthy", "service": "Kashmiri Dry Fruits API"}), 200
+        return jsonify({"status": "healthy", "service": "Kashmiri Heritage API"}), 200
 
     @app.errorhandler(404)
     def not_found(error):

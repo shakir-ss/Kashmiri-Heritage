@@ -1,5 +1,5 @@
 Feature: Wishlist Management
-    As a customer of the Kashmiri Dry Fruits platform
+    As a customer of the Kashmiri Heritage platform
     I want to save my favorite products to a wishlist
     So that I can purchase them later
 

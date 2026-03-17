@@ -1,5 +1,5 @@
 Feature: Product Management
-    As a user or admin of the Kashmiri Dry Fruits platform
+    As a user or admin of the Kashmiri Heritage platform
     I want to browse, search, and manage products
 
     @api @smoke @positive

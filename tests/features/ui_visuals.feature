@@ -1,5 +1,5 @@
 Feature: UI Visual Validation
-    As a user of the Kashmiri Dry Fruits platform
+    As a user of the Kashmiri Heritage platform
     I want to see all product and category images clearly
     So that I can make informed purchasing decisions
 
