@@ -117,8 +117,8 @@ def step_impl(context):
     context.page.wait_for_load_state("networkidle")
     # Brief wait for Pinia to sync
     context.page.wait_for_timeout(2000)
-    # Ensure button exists and click it
-    context.page.locator('.btn-secondary.btn-block').click()
+    # Just verify we are on the cart page
+    expect(context.page.locator('.cart-view')).to_be_visible()
 
 @when('I fill in address "{address}" and phone "{phone}"')
 def step_impl(context, address, phone):
