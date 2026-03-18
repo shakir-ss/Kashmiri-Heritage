@@ -26,3 +26,6 @@ playwright/.cache/
 # Conductor
 # Keep the conductor folder for project context, but maybe ignore track plan results if they get large
 # conductor/tracks/
+
+*.log
+.*png

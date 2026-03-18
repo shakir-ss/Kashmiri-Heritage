@@ -91,6 +91,9 @@ def step_impl(context):
 
 @when('I add "{name}" to the cart')
 def step_impl(context, name):
+    # Ensure products are loaded
+    context.page.wait_for_selector('.product-card', state='visible', timeout=15000)
+    
     # Ensure stock exists via API before clicking
     response = context.api_session.get(f"{context.base_api_url}/products/")
     product = next((p for p in response.json() if p['name'] == name), None)
@@ -103,8 +106,7 @@ def step_impl(context, name):
         })
 
     # Find the card with the name, and click its Add to Cart button
-    product_card = context.page.locator('.product-card', has_text=name).first
-    product_card.get_by_role("button", name="Add to Cart").click()
+    context.page.click(f'.product-card:has-text("{name}") .btn-primary')
     
     # Wait for state update
     context.page.wait_for_timeout(1500)
@@ -114,8 +116,9 @@ def step_impl(context):
     context.page.goto(f"{context.base_ui_url}/cart")
     context.page.wait_for_load_state("networkidle")
     # Brief wait for Pinia to sync
-    context.page.wait_for_timeout(1000)
-    expect(context.page.locator('.empty-cart')).not_to_be_visible()
+    context.page.wait_for_timeout(2000)
+    # Ensure button exists and click it
+    context.page.locator('.btn-secondary.btn-block').click()
 
 @when('I fill in address "{address}" and phone "{phone}"')
 def step_impl(context, address, phone):

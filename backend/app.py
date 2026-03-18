@@ -20,6 +20,7 @@ def create_app(config_name):
     from routes.orders import orders_bp
     from routes.analytics import analytics_bp
     from routes.wishlist import wishlist_bp
+    from routes.contact import contact_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(products_bp, url_prefix='/api/products')
@@ -27,6 +28,8 @@ def create_app(config_name):
     app.register_blueprint(orders_bp, url_prefix='/api/orders')
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     app.register_blueprint(wishlist_bp, url_prefix='/api/wishlist')
+    app.register_blueprint(contact_bp, url_prefix='/api/contact')
+
     @app.route('/health', methods=['GET'])
     def health_check():
         return jsonify({"status": "healthy", "service": "Kashmiri Heritage API"}), 200

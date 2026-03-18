@@ -29,7 +29,7 @@ Feature: Cart and Checkout
     Scenario: Complete checkout with local pincode free delivery
         Given I am logged in as admin on the UI
         And I am on the Home page
-        When I add "Mamra Almonds" to the cart
+        When I add "Premium Mamra Almonds" to the cart
         And I go to the Cart page
         And I click the modal button "Proceed to Checkout"
         And I fill in "Full Name" with "Local Customer"
@@ -47,7 +47,7 @@ Feature: Cart and Checkout
     Scenario: Verify Partial COD commitment messaging and breakdown
         Given I am logged in as admin on the UI
         And I am on the Home page
-        When I add "Mamra Almonds" to the cart
+        When I add "Premium Mamra Almonds" to the cart
         And I go to the Cart page
         And I click the modal button "Proceed to Checkout"
         And I fill in "City" with "Delhi"
@@ -61,7 +61,7 @@ Feature: Cart and Checkout
     Scenario: Verify terms agreement is mandatory for checkout
         Given I am logged in as admin on the UI
         And I am on the Home page
-        When I add "Mamra Almonds" to the cart
+        When I add "Premium Mamra Almonds" to the cart
         And I go to the Cart page
         And I click the modal button "Proceed to Checkout"
         When I click the modal button "Authorize Full Payment"
@@ -71,7 +71,7 @@ Feature: Cart and Checkout
     @ui @regression
     Scenario: Navigate to product detail from cart
         Given I am on the Home page
-        When I add "Mamra Almonds" to the cart
+        When I add "Premium Mamra Almonds" to the cart
         And I go to the Cart page
-        When I click on the product icon for "Mamra Almonds"
-        Then I should be on the detail page for "Mamra Almonds"
+        When I click on the product icon for "Premium Mamra Almonds"
+        Then I should be on the detail page for "Premium Mamra Almonds"

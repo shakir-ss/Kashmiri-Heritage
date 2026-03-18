@@ -344,7 +344,10 @@ def step_impl(context, button_text):
             btn.click()
             
         # If it's a save/submit button, wait for modal to disappear
-        if "Save" in button_text or "Pay" in button_text:
+        if "Proceed to Checkout" in button_text:
+            context.page.wait_for_load_state("networkidle")
+            context.page.wait_for_timeout(3000)
+        elif "Save" in button_text or "Pay" in button_text:
             context.page.wait_for_selector('.modal-overlay', state='hidden', timeout=10000)
             
     except Exception as e:

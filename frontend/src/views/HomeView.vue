@@ -25,47 +25,159 @@
       </div>
     </header>
 
+    <!-- Heritage Trust Bar -->
+    <div class="trust-bar">
+      <div class="container trust-content">
+        <div class="trust-item">
+          <span class="trust-icon">🏺</span>
+          <div class="trust-text">
+            <strong>Direct from Artisans</strong>
+            <p>Fair trade & direct sourcing</p>
+          </div>
+        </div>
+        <div class="trust-divider"></div>
+        <div class="trust-item">
+          <span class="trust-icon">🔬</span>
+          <div class="trust-text">
+            <strong>Lab Certified</strong>
+            <p>100% Pure Grade A++ Saffron</p>
+          </div>
+        </div>
+        <div class="trust-divider"></div>
+        <div class="trust-item">
+          <span class="trust-icon">✈️</span>
+          <div class="trust-text">
+            <strong>Global Delivery</strong>
+            <p>Secure worldwide shipping</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SVG Divider -->
+    <svg class="section-divider" viewBox="0 0 1440 100" preserveAspectRatio="none">
+      <path d="M0,0 C240,100 480,100 720,50 C960,0 1200,0 1440,100 L1440,100 L0,100 Z"></path>
+    </svg>
+
     <!-- Categories Section -->
     <section id="featured" class="categories-section container">
       <div class="section-header">
-        <h2>Curated Collections</h2>
-        <p>Discover the finest artisanal treasures from the Valley</p>
+        <span class="category-tag">Heritage Collections</span>
+        <h2>Curated Treasures</h2>
+        <p class="fw-light">Discover the finest artisanal gems from the Kashmir Valley</p>
       </div>
       
       <div class="category-grid">
-        <div class="category-card" v-for="cat in categories" :key="cat.name">
+        <div class="category-card tilla-hover" v-for="cat in categories" :key="cat.name">
           <div class="cat-image" :style="{ backgroundImage: `url(${cat.image})` }"></div>
           <div class="cat-info">
             <h3>{{ cat.name }}</h3>
-            <router-link :to="{ name: 'products', query: { category: cat.id } }" class="btn-link">View All →</router-link>
+            <router-link :to="{ name: 'products', query: { category: cat.id } }" class="btn-link">View All Collection →</router-link>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- Artisan Spotlight -->
+    <section class="artisan-spotlight kashmiri-pattern">
+      <div class="container spotlight-grid">
+        <div class="spotlight-image-wrapper">
+          <div class="spotlight-image"></div>
+          <div class="experience-badge">40+ Years of Craft</div>
+        </div>
+        <div class="spotlight-content">
+          <div class="category-tag">The Hands Behind the Heritage</div>
+          <h2>Master Weaver: <span class="italic">Abdul Rashid</span></h2>
+          <p class="quote">"Each Pashmina I weave is a story of my ancestors, passed down through generations. When you wear our heritage, you carry the soul of Kashmir."</p>
+          <div class="spotlight-stats">
+            <div class="stat">
+              <span class="stat-num">100%</span>
+              <span class="stat-label">Hand Spun</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">6+ Months</span>
+              <span class="stat-label">Per Masterpiece</span>
+            </div>
+          </div>
+          <router-link to="/products?category=2" class="btn btn-primary">Meet the Artisans</router-link>
+        </div>
+      </div>
+    </section>
+
     <!-- Best Sellers -->
-    <section class="featured-products kashmiri-pattern">
+    <section class="featured-products">
       <div class="container">
         <div class="section-header">
+          <span class="category-tag">Customer Favorites</span>
           <h2>Premium Best Sellers</h2>
-          <router-link to="/products" class="btn-link">View All Collection →</router-link>
+          <router-link to="/products" class="btn-link">Shop Entire Store →</router-link>
         </div>
         
         <div class="product-grid">
-          <div class="product-card" v-for="product in productStore.products.slice(0, 4)" :key="product.id">
-            <div class="product-image">
-              <img :src="product.image_url || 'https://via.placeholder.com/300x400'" :alt="product.name" />
-              <div class="product-badge" v-if="product.stock > 0">In Stock</div>
+          <!-- Skeleton Loader -->
+          <template v-if="productStore.loading">
+            <div class="product-card" v-for="i in 4" :key="i">
+              <div class="product-image skeleton"></div>
+              <div class="product-info">
+                <div class="skeleton" style="height: 10px; width: 40%; margin-bottom: 10px;"></div>
+                <div class="skeleton" style="height: 20px; width: 80%; margin-bottom: 15px;"></div>
+                <div class="skeleton" style="height: 40px; width: 100%;"></div>
+              </div>
             </div>
+          </template>
+
+          <div v-else class="product-card card" v-for="product in productStore.products.slice(0, 4)" :key="product.id">
+            <router-link :to="'/products/' + product.id" class="product-image">
+              <img :src="product.image_url || 'https://via.placeholder.com/300x400'" :alt="product.name" />
+              <div class="product-badge" v-if="product.stock > 0">Hand-Selected</div>
+            </router-link>
             <div class="product-info">
               <span class="category-tag">Kashmiri Specialty</span>
-              <h4>{{ product.name }}</h4>
-              <div class="price-row">
+              <router-link :to="'/products/' + product.id" style="text-decoration: none; display: block; margin: 0.5rem 0;">
+                <h4 style="margin: 0;">{{ product.name }}</h4>
+              </router-link>
+              <div class="price-row" style="margin-bottom: 1rem;">
                 <span class="price">₹{{ product.price }}</span>
                 <span v-if="product.discount_price" class="old-price">₹{{ product.discount_price }}</span>
               </div>
+            </div>
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem;">
               <button @click="addToCart(product)" class="btn btn-primary btn-sm btn-block">Add to Cart</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Proof / Testimonials -->
+    <section class="testimonials-section container">
+      <div class="section-header">
+        <span class="category-tag">Global Appreciation</span>
+        <h2>Heritage in Your Homes</h2>
+      </div>
+      <div class="testimonial-grid">
+        <div class="testimonial-card card">
+          <div class="rating">⭐⭐⭐⭐ stars</div>
+          <p>"The Saffron quality is unlike anything I've found in Europe. Truly authentic and the packaging is premium."</p>
+          <div class="user-info">
+            <strong>Sarah J.</strong>
+            <span>London, UK</span>
+          </div>
+        </div>
+        <div class="testimonial-card card highlight-testimonial">
+          <div class="rating">⭐⭐⭐⭐⭐ stars</div>
+          <p>"My Kani shawl is a work of art. You can feel the months of labor in every thread. Excellent service and fast delivery."</p>
+          <div class="user-info">
+            <strong>Priya M.</strong>
+            <span>Mumbai, India</span>
+          </div>
+        </div>
+        <div class="testimonial-card card">
+          <div class="rating">⭐⭐⭐⭐⭐ stars</div>
+          <p>"The Mamra almonds are so fresh and crunchy. I love knowing they come directly from Kashmiri orchards."</p>
+          <div class="user-info">
+            <strong>David L.</strong>
+            <span>Dubai, UAE</span>
           </div>
         </div>
       </div>
@@ -75,11 +187,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 
 const productStore = useProductStore()
 const cartStore = useCartStore()
+const router = useRouter()
 const showWalnutBanner = ref(false)
 
 const b64_img = (color_hex) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23${color_hex}'/%3E%3C/svg%3E`
@@ -322,5 +436,196 @@ const addToCart = (product) => {
 
 .btn-block {
   width: 100%;
+}
+
+/* Heritage Trust Bar */
+.trust-bar {
+  background: white;
+  padding: 2.5rem 0;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.trust-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.trust-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
+}
+
+.trust-text strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--primary);
+  margin-bottom: 0.2rem;
+}
+
+.trust-text p {
+  font-size: 0.85rem;
+  color: #777;
+  margin: 0;
+}
+
+.trust-divider {
+  width: 1px;
+  height: 40px;
+  background: #eee;
+}
+
+/* Artisan Spotlight */
+.artisan-spotlight {
+  padding: 8rem 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+.spotlight-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+}
+
+.spotlight-image-wrapper {
+  position: relative;
+}
+
+.spotlight-image {
+  height: 600px;
+  background-image: url("https://images.unsplash.com/photo-1590073844006-33379778ae09?auto=format&fit=crop&q=80&w=800");
+  background-size: cover;
+  background-position: center;
+  border-radius: 30px;
+  box-shadow: 30px 30px 0 var(--pattern-color, #f4f1ea);
+}
+
+.experience-badge {
+  position: absolute;
+  bottom: 2rem;
+  right: -2rem;
+  background: var(--primary);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 15px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+
+.spotlight-content h2 {
+  font-size: 3rem;
+  margin: 1.5rem 0;
+  color: var(--primary);
+}
+
+.quote {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.quote::before {
+  content: '"';
+  position: absolute;
+  top: -2rem;
+  left: -1rem;
+  font-size: 5rem;
+  color: var(--secondary);
+  opacity: 0.3;
+}
+
+.spotlight-stats {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.stat-num {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--secondary);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+}
+
+/* Testimonials */
+.testimonials-section {
+  padding: 8rem 0;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.testimonial-card {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.highlight-testimonial {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.highlight-testimonial p { color: #ccc; }
+.highlight-testimonial .rating { color: var(--secondary); }
+
+.rating {
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--tilla-gold);
+}
+
+.testimonial-card p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+.user-info strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.user-info span {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.highlight-testimonial .user-info span { color: #aaa; }
+
+@media (max-width: 768px) {
+  .trust-content { flex-direction: column; gap: 2rem; text-align: center; }
+  .trust-item { flex-direction: column; gap: 0.5rem; }
+  .trust-divider { display: none; }
+  .spotlight-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .spotlight-image { height: 400px; }
+  .experience-badge { right: 1rem; }
+  .testimonial-grid { grid-template-columns: 1fr; }
+  .highlight-testimonial { transform: none; }
 }
 </style>

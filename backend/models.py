@@ -123,3 +123,14 @@ class Analytics(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     view_count = db.Column(db.Integer, default=0)
     last_viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ContactInquiry(db.Model):
+    __tablename__ = 'contact_inquiries'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=True)
+    subject = db.Column(db.String(200), nullable=True)
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending') # pending, responded, closed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

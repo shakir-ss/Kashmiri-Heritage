@@ -21,7 +21,10 @@ def after_all(context):
 def before_scenario(context, scenario):
     # Create a fresh browser context for each UI scenario
     if "ui" in scenario.tags:
-        context.browser_context = context.browser.new_context()
+        # Setup context with a standard desktop viewport
+        context.browser_context = context.browser.new_context(
+            viewport={'width': 1920, 'height': 1080}
+        )
         context.page = context.browser_context.new_page()
         # Enable console logging
         context.page.on("console", lambda msg: print(f"BROWSER CONSOLE: {msg.text}"))

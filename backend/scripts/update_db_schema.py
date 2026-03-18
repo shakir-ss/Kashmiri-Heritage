@@ -113,6 +113,24 @@ def update_schema():
             print("Created 'product_variants' table.")
         except Exception as e:
             print(f"Error creating 'product_variants' table: {e}")
+
+        try:
+            # Create contact_inquiries table
+            db.session.execute(db.text("""
+                CREATE TABLE IF NOT EXISTS contact_inquiries (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    email VARCHAR(120) NOT NULL,
+                    phone VARCHAR(20),
+                    subject VARCHAR(200),
+                    message TEXT NOT NULL,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            print("Created 'contact_inquiries' table.")
+        except Exception as e:
+            print(f"Error creating 'contact_inquiries' table: {e}")
         
         db.session.commit()
         print("Schema update complete.")

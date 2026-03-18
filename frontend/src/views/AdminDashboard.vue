@@ -125,6 +125,60 @@
 
     <hr class="divider" />
 
+    <!-- Customer Inquiries -->
+    <section class="admin-section">
+      <h2 class="section-title">Customer Inquiries</h2>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>Subject</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="inquiry in inquiries" :key="inquiry.id">
+              <td>
+                <div class="cust-info">
+                  <strong>{{ inquiry.name }}</strong>
+                  <small>{{ inquiry.email }}</small>
+                  <small v-if="inquiry.phone">{{ inquiry.phone }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="subject-info">
+                  <strong>{{ inquiry.subject }}</strong>
+                  <p class="mini-message">{{ truncate(inquiry.message, 60) }}</p>
+                </div>
+              </td>
+              <td>{{ formatDate(inquiry.created_at) }}</td>
+              <td>
+                <span class="status-badge" :class="inquiry.status">
+                  {{ inquiry.status }}
+                </span>
+              </td>
+              <td class="actions">
+                <button @click="viewInquiry(inquiry)" class="btn-text">View</button>
+                <select @change="updateInquiryStatus(inquiry.id, $event.target.value)" :value="inquiry.status" class="status-select">
+                  <option value="pending">Pending</option>
+                  <option value="responded">Responded</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </td>
+            </tr>
+            <tr v-if="inquiries.length === 0">
+              <td colspan="5" class="text-center">No inquiries yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
     <!-- Inventory Management -->
     <h2 class="section-title">Product Inventory</h2>
     <div class="admin-table-container">
@@ -284,6 +338,7 @@ const showCategoryModal = ref(false)
 const editingId = ref(null)
 const editingCatId = ref(null)
 const orders = ref([])
+const inquiries = ref([])
 
 const form = ref({
   name: '',
@@ -308,7 +363,30 @@ onMounted(() => {
   productStore.fetchCategories()
   analyticsStore.fetchStats()
   fetchOrders()
+  fetchInquiries()
 })
+
+const fetchInquiries = async () => {
+  try {
+    const res = await axios.get('/api/contact/')
+    inquiries.value = res.data
+  } catch (err) {
+    console.error('Failed to fetch inquiries:', err)
+  }
+}
+
+const viewInquiry = (inquiry) => {
+  alert(`Inquiry from ${inquiry.name}\nSubject: ${inquiry.subject}\n\nMessage:\n${inquiry.message}\n\nContact:\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone || 'N/A'}`)
+}
+
+const updateInquiryStatus = async (id, newStatus) => {
+  try {
+    await axios.put(`/api/contact/${id}/status`, { status: newStatus })
+    await fetchInquiries()
+  } catch (err) {
+    alert('Failed to update status')
+  }
+}
 
 const truncate = (text, length) => {
   return text.length > length ? text.substring(0, length) + '...' : text
