@@ -76,7 +76,8 @@
 <style scoped>
 .about-hero {
   height: 60vh;
-  background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://images.unsplash.com/photo-1598305371124-42ce18a75201?auto=format&fit=crop&q=80&w=1200");
+  /* background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://images.unsplash.com/photo-1598305371124-42ce18a75201?auto=format&fit=crop&q=80&w=1200"); */
+  background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("https://drive.google.com/file/d/1oNpP9gmSEP7VARd0ZWefhyGzZ1Lf5D-Q/view");
   background-size: cover;
   background-position: center;
   display: flex;
