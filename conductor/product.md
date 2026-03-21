@@ -1,4 +1,4 @@
-# Product Definition - Kashmiri Heritage
+# Product Definition - The Hundred Villages
 
 ## Overview
 A premium, scalable, and high-performance e-commerce platform specializing in Kashmiri products (Dry Fruits & Handicrafts). The architecture focuses on performance, security, and organic aesthetics.

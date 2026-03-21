@@ -1,4 +1,4 @@
-# User Journey: The Kashmiri Heritage Experience
+# User Journey: The The Hundred Villages Experience
 
 This document outlines the end-to-end user experience for customers on the Kashmiri General Store platform.
 

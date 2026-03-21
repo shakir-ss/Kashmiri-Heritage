@@ -1,4 +1,4 @@
-# Product Guidelines - Kashmiri Heritage
+# Product Guidelines - The Hundred Villages
 
 ## Visual Identity
 - **Aesthetic:** Organic, Premium, Natural.

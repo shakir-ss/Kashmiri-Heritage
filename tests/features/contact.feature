@@ -1,5 +1,5 @@
 Feature: Customer Inquiries
-    As a customer of the Kashmiri Heritage platform
+    As a customer of The Hundred Villages platform
     I want to contact the support team with my queries
     So that I can get assistance with products or orders
 

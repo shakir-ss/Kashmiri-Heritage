@@ -28,7 +28,7 @@ class MessagingService:
             
             message = client.messages.create(
                 from_=from_phone,
-                body=f"Salam! Your Order #{order_id} for Kashmiri Heritage (Total: ₹{total_amount}) has been placed. We'll notify you when it's shipped!",
+                body=f"Salam! Your Order #{order_id} for The Hundred Villages (Total: ₹{total_amount}) has been placed. We'll notify you when it's shipped!",
                 to=f"whatsapp:{to_phone}"
             )
             return message.sid

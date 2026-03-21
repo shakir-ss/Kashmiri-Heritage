@@ -1,5 +1,5 @@
 Feature: Analytics
-    As an admin of the Kashmiri Heritage platform
+    As an admin of the The Hundred Villages platform
     I want to track product views and see shop stats
 
     @api @smoke @positive

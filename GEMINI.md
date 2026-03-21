@@ -1,4 +1,4 @@
-# Kashmiri Heritage - Project Documentation
+# The Hundred Villages - Project Documentation
 
 ## PROJECT VISION
 A premium, scalable, and high-performance e-commerce platform specializing in Kashmiri products (Dry Fruits & Handicrafts). The architecture focuses on performance, security, and organic aesthetics.

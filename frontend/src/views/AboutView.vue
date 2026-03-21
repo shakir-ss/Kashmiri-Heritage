@@ -14,7 +14,7 @@
         <div class="story-text">
           <span class="category-tag">Established 1984</span>
           <h2>The Soul of the Valley</h2>
-          <p>Kashmiri Heritage was born from a simple yet profound desire: to bridge the gap between the secluded artisans of the Himalayas and the global connoisseurs of fine craft. For generations, our family has worked alongside the master weavers, wood-carvers, and farmers of the Kashmir Valley.</p>
+          <p>The Hundred Villages was born from a simple yet profound desire: to bridge the gap between the secluded artisans of the Himalayas and the global connoisseurs of fine craft. For generations, our family has worked alongside the master weavers, wood-carvers, and farmers of the Kashmir Valley.</p>
           <p>We don't just sell products; we curate stories. Every Pashmina, every Papier Mâché box, and every gram of Saffron we offer is a testament to a heritage that has survived empires and outlasted industrialization.</p>
         </div>
         <div class="story-image card artisan-border">

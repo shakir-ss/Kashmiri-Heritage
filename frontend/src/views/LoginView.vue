@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card">
       <h2 class="auth-title">Welcome Back</h2>
-      <p class="auth-subtitle">Login to your Kashmiri Heritage account</p>
+      <p class="auth-subtitle">Login to your The Hundred Villages account</p>
       
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">

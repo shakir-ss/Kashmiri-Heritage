@@ -3,7 +3,7 @@
     <h2 class="cart-title">Your Shopping Cart</h2>
     
     <div v-if="cartStore.items.length === 0" class="empty-cart">
-      <p>Your cart is empty. The finest Kashmiri heritage treasures are waiting for you!</p>
+      <p>Your cart is empty. The finest The Hundred Villages treasures are waiting for you!</p>
       <router-link to="/products" class="btn btn-secondary">Start Shopping</router-link>
     </div>
 

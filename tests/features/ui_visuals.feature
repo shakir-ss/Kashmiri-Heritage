@@ -1,5 +1,5 @@
 Feature: UI Visual Validation
-    As a user of the Kashmiri Heritage platform
+    As a user of The Hundred Villages platform
     I want to see all product and category images clearly
     So that I can make informed purchasing decisions
 

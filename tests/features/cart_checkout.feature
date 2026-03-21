@@ -1,5 +1,5 @@
 Feature: Cart and Checkout
-    As a customer of the Kashmiri Heritage platform
+    As a customer of The Hundred Villages platform
     I want to manage my cart and place orders
 
     @api @smoke @positive

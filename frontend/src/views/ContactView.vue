@@ -3,7 +3,7 @@
     <div v-if="submitted" class="success-screen card artisan-border">
       <div class="success-icon">✉️</div>
       <h2>Message Received</h2>
-      <p>Thank you for reaching out to Kashmiri Heritage. Our team will review your query and get back to you shortly.</p>
+      <p>Thank you for reaching out to The Hundred Villages. Our team will review your query and get back to you shortly.</p>
       <button @click="submitted = false" class="btn btn-primary">Send Another Message</button>
     </div>
 
@@ -32,7 +32,7 @@
             <span class="icon">📧</span>
             <div>
               <strong>Email Us</strong>
-              <p>support@kashmiriheritage.com</p>
+              <p>support@thehundredvillages.com</p>
             </div>
           </div>
         </div>

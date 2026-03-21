@@ -1,4 +1,4 @@
-# Tech Stack - Kashmiri Heritage
+# Tech Stack - The Hundred Villages
 
 ## Backend
 - **Language/Framework:** Python (Flask)

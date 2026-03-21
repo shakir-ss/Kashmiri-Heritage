@@ -1,9 +1,9 @@
-# Kashmiri Heritage
+# The Hundred Villages
 
-[![BDD Tests](https://img.shields.io/badge/BDD%20Tests-100%25%20Pass-brightgreen)](https://github.com/yourusername/kashmiri-heritage)
-[![Tech Stack](https://img.shields.io/badge/Stack-Vue%203%20%7C%20Flask%20%7C%20MySQL-blue)](https://github.com/yourusername/kashmiri-heritage)
+[![BDD Tests](https://img.shields.io/badge/BDD%20Tests-100%25%20Pass-brightgreen)](https://github.com/shakir-ss/Kashmiri-Heritage)
+[![Tech Stack](https://img.shields.io/badge/Stack-Vue%203%20%7C%20Flask%20%7C%20MySQL-blue)](https://github.com/shakir-ss/Kashmiri-Heritage)
 
-A premium, high-performance e-commerce platform dedicated to preserving and showcasing the artisanal excellence of the Kashmir Valley. **Kashmiri Heritage** bridges the gap between traditional Himalayan craftsmanship and the global connoisseur through an immersive, storytelling-driven digital experience.
+A premium, high-performance e-commerce platform dedicated to preserving and showcasing the artisanal excellence of the Kashmir Valley. **The Hundred Villages** bridges the gap between traditional Himalayan craftsmanship and the global connoisseur through an immersive, storytelling-driven digital experience.
 
 ## 🏺 Project Vision
 To provide a world-class storefront for authentic Kashmiri products, ranging from lab-certified Mongra Saffron to hand-embroidered Pashmina shawls. The platform emphasizes:

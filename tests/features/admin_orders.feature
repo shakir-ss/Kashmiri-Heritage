@@ -1,5 +1,5 @@
 Feature: Admin Order Management
-    As an administrator of the Kashmiri Heritage platform
+    As an administrator of the The Hundred Villages platform
     I want to see all customer orders and their details
     So that I can fulfill them and monitor shop performance
 
