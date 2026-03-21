@@ -181,8 +181,8 @@
 
     <!-- Inventory Management -->
     <h2 class="section-title">Product Inventory</h2>
-    <div class="admin-table-container">
-      <table class="admin-table">
+    <div class="admin-table-container" v-if="!productStore.loading">
+      <table class="admin-table" id="inventory-table">
         <thead>
           <tr>
             <th>Product</th>
@@ -262,6 +262,11 @@
                 {{ cat.name }}
               </option>
             </select>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="prod-active" v-model="form.is_active" />
+            <label for="prod-active">Show on Website (Active)</label>
           </div>
           
           <!-- Variants Section -->
@@ -523,7 +528,8 @@ const editProduct = (product) => {
   form.value = { 
     ...product,
     additional_images: product.images ? [...product.images] : [],
-    variants: product.variants ? [...product.variants] : []
+    variants: product.variants ? [...product.variants] : [],
+    is_active: product.is_active // Ensure this is captured
   }
   showAddModal.value = true
 }
@@ -538,6 +544,8 @@ const saveProduct = async () => {
   if (editingId.value) {
     success = await productStore.updateProduct(editingId.value, form.value)
   } else {
+    // New products are active by default if not specified
+    if (form.value.is_active === undefined) form.value.is_active = true
     success = await productStore.addProduct(form.value)
   }
   
@@ -557,7 +565,8 @@ const closeModal = () => {
     image_url: '', 
     additional_images: [],
     weight_grams: 0,
-    variants: []
+    variants: [],
+    is_active: true // Reset to default
   }
 }
 </script>

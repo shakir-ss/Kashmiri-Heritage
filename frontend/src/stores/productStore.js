@@ -22,6 +22,10 @@ export const useProductStore = defineStore('products', {
     async fetchProducts(query = {}) {
       this.loading = true
       try {
+        // Automatically add admin=true if the user is in the admin section
+        if (window.location.pathname.startsWith('/admin')) {
+          query.admin = true
+        }
         const res = await axios.get('/api/products/', { params: query })
         this.products = res.data
       } catch (err) {

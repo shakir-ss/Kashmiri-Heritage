@@ -20,10 +20,16 @@ def step_impl(context):
 # --- UI STEPS ---
 
 @given('I am on the Admin Dashboard')
+@when('I am on the Admin Dashboard')
 def step_impl(context):
     context.page.goto(f"{context.base_ui_url}/admin")
     # Wait for the dashboard to load
     context.page.wait_for_selector('h1:has-text("Admin Insights")')
+
+@when('I go to the Products page')
+def step_impl(context):
+    context.page.goto(f"{context.base_ui_url}/products")
+    context.page.wait_for_selector('.products-grid, .product-card, h1:has-text("Our Products")')
 
 @then('I should see the "{title}" table')
 def step_impl(context, title):
@@ -60,3 +66,67 @@ def step_impl(context, name):
     link = context.page.locator('.admin-table tr').filter(has_text=name).locator('a.product-cell-link')
     link.scroll_into_view_if_needed()
     link.click()
+
+@when('I click on "Edit" for product "{name}"')
+def step_impl(context, name):
+    # Specifically look in the inventory table
+    inventory_table = context.page.locator('#inventory-table')
+    expect(inventory_table).to_be_visible(timeout=10000)
+    
+    # Use a more robust way to find the row: look for text anywhere in the row
+    # We use filter(has_text=name) which is generally good
+    try:
+        row = inventory_table.locator('tr').filter(has_text=name).first
+        # Ensure row exists
+        expect(row).to_be_visible(timeout=5000)
+        # Click the Edit button in that row - use force if needed
+        row.locator('button', has_text="Edit").click(force=True)
+    except Exception as e:
+        context.page.screenshot(path=f"error_edit_{name.replace(' ', '_')}.png")
+        # Print the table content for debugging
+        print("DEBUG: Inventory Table Text:", inventory_table.inner_text())
+        raise e
+
+@when('I uncheck the "{label}" checkbox')
+def step_impl(context, label):
+    context.page.get_by_label(label).uncheck()
+
+@when('I check the "{label}" checkbox')
+def step_impl(context, label):
+    context.page.get_by_label(label).check()
+
+@then('the status for "{name}" should be "{status}"')
+def step_impl(context, name, status):
+    # Force a refresh to be sure we have latest data
+    context.page.get_by_text("Refresh Stats").click()
+    context.page.wait_for_timeout(3000)
+    
+    # Ensure we are looking at the inventory table
+    table = context.page.locator('#inventory-table')
+    expect(table).to_be_visible(timeout=10000)
+    
+    # Find the row and check badge text
+    # Use a simpler filter if the full name has special characters
+    search_name = name.split('(')[0].strip() if '(' in name else name
+    try:
+        row = table.locator('tr').filter(has_text=search_name).first
+        badge = row.locator('.status-badge')
+        # We expect the text to BE the status (case insensitive or exact)
+        # Note: UI shows "ACTIVE" or "INACTIVE" (uppercase) based on CSS/Badge class
+        expect(badge).to_contain_text(status, ignore_case=True, timeout=10000)
+    except Exception as e:
+        context.page.screenshot(path=f"error_status_{status}_{name.replace(' ', '_')}.png")
+        print(f"DEBUG: Table text for status check: {table.inner_text()}")
+        raise e
+
+@then('I should not see product "{name}"')
+def step_impl(context, name):
+    # Use context.last_product_name if name matches placeholder
+    actual_name = getattr(context, 'last_product_name', name) if name in ["Limited Edition Box", "Multi-Pack Saffron", "Local Image Product"] else name
+    
+    # Wait a bit to ensure it's filtered out
+    context.page.wait_for_timeout(2000)
+    
+    # Check that no element with this exact text exists in the visible product cards
+    # We use a locator that filters by text and ensure it's hidden or count is 0
+    expect(context.page.locator('.product-card').get_by_text(actual_name)).to_have_count(0)

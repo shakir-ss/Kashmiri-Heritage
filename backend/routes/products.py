@@ -1,8 +1,16 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from models import db, Product, Category, ProductImage, ProductVariant
 from .auth import token_required, admin_required
+import jwt
 
 products_bp = Blueprint('products', __name__)
+
+def decode_token_simple(token):
+    try:
+        data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
+        return data
+    except:
+        return None
 
 # --- CATEGORY ROUTES ---
 
@@ -92,11 +100,25 @@ def delete_category(current_user, id):
 def get_products():
     category_param = request.args.get('category')
     search = request.args.get('search')
+    admin_param = request.args.get('admin') == 'true'
     
-    query = Product.query.filter_by(is_active=True)
+    # Check if user is actually an admin before allowing 'admin=true' parameter
+    is_authorized_admin = False
+    auth_header = request.headers.get('Authorization')
+    if auth_header and admin_param:
+        try:
+            token = auth_header.split(" ")[1]
+            data = decode_token_simple(token)
+            if data and data.get('role') == 'admin':
+                is_authorized_admin = True
+        except:
+            pass
+
+    query = Product.query
+    if not is_authorized_admin:
+        query = query.filter_by(is_active=True)
     
     if category_param:
-        # Check if it's an ID (numeric) or a slug
         if category_param.isdigit():
             query = query.filter_by(category_id=int(category_param))
         else:
@@ -104,14 +126,12 @@ def get_products():
             if category:
                 query = query.filter_by(category_id=category.id)
             else:
-                # If slug not found, return empty list or ignore filter
-                # For now, let's just make the query return nothing to be strict
                 query = query.filter(Product.id == -1)
             
     if search:
         query = query.filter(Product.name.contains(search))
         
-    products = query.all()
+    products_list = query.all()
     return jsonify([{
         'id': p.id,
         'name': p.name,
@@ -122,6 +142,7 @@ def get_products():
         'discount_price': p.discount_price,
         'stock': p.stock,
         'image_url': p.image_url,
+        'is_active': p.is_active,
         'category': p.category.name if p.category else None,
         'category_id': p.category_id,
         'images': [img.image_url for img in p.images],
@@ -134,7 +155,7 @@ def get_products():
             'stock': v.stock,
             'sku': v.sku
         } for v in p.variants]
-    } for p in products])
+    } for p in products_list])
 
 @products_bp.route('/<int:id>', methods=['GET'])
 def get_product(id):
@@ -148,6 +169,7 @@ def get_product(id):
         'price': product.price,
         'discount_price': product.discount_price,
         'stock': product.stock,
+        'is_active': product.is_active,
         'image_url': product.image_url,
         'category': product.category.name if product.category else None,
         'category_id': product.category_id,
@@ -171,7 +193,6 @@ def create_product(current_user):
     name = data.get('name')
     slug = data.get('slug') or name.lower().replace(' ', '-')
     
-    # Unique slug check
     base_slug = slug
     counter = 1
     while Product.query.filter_by(slug=slug).first():
@@ -192,13 +213,11 @@ def create_product(current_user):
         attributes=data.get('attributes', {})
     )
     
-    # Handle additional images
     additional_images = data.get('additional_images', [])
     for url in additional_images:
         if url:
             new_product.images.append(ProductImage(image_url=url))
 
-    # Handle variants
     variants_data = data.get('variants', [])
     for v in variants_data:
         if v.get('name'):
@@ -237,16 +256,12 @@ def update_product(current_user, id):
     product.weight_grams = data.get('weight_grams', product.weight_grams)
     product.attributes = data.get('attributes', product.attributes)
     
-    # Update additional images
     if 'additional_images' in data:
-        # Clear existing images
         ProductImage.query.filter_by(product_id=id).delete()
-        # Add new ones
         for url in data.get('additional_images', []):
             if url:
                 db.session.add(ProductImage(product_id=id, image_url=url))
 
-    # Update variants
     if 'variants' in data:
         ProductVariant.query.filter_by(product_id=id).delete()
         for v in data.get('variants', []):
