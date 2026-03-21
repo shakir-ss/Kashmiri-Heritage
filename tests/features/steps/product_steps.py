@@ -105,8 +105,10 @@ def step_impl(context, name, price, stock, details):
     assert context.response.status_code == 201, f"Expected 201 but got {context.response.status_code}: {context.response.text}"
 
 @given('I am on the Products page')
+@when('I am on the Products page')
 def step_impl(context):
     context.page.goto(f"{context.base_ui_url}/products")
+    context.page.wait_for_selector('.products-grid, .product-card, h1:has-text("Our Products")')
 
 @then('I should see product "{name}"')
 def step_impl(context, name):

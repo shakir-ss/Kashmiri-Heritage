@@ -14,7 +14,7 @@ def step_impl(context):
 
 @given('I am logged in as admin on the UI')
 def step_impl(context):
-    context.page.goto(f"{context.base_ui_url}/login")
+    context.page.goto(f"{context.base_ui_url}/login", wait_until="networkidle")
     context.page.evaluate("window.localStorage.clear()")
     context.page.fill('input[type="email"]', "root@thehundredvillages.com")
     context.page.fill('input[type="password"]', "root123")

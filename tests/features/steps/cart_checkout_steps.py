@@ -91,25 +91,40 @@ def step_impl(context):
 
 @when('I add "{name}" to the cart')
 def step_impl(context, name):
-    # Ensure products are loaded
+    # Ensure products are loaded and visible
     context.page.wait_for_selector('.product-card', state='visible', timeout=15000)
     
-    # Ensure stock exists via API before clicking
-    response = context.api_session.get(f"{context.base_api_url}/products/")
-    product = next((p for p in response.json() if p['name'] == name), None)
-    if product:
-        context.api_session.put(f"{context.base_api_url}/products/{product['id']}", json={
-            "name": product['name'],
-            "price": product['price'],
-            "stock": 100,
-            "category_id": product['category_id']
-        })
+    # Use context.last_product_name if name matches placeholder
+    actual_name = getattr(context, 'last_product_name', name) if name in ["Limited Edition Box", "Multi-Pack Saffron"] else name
 
-    # Find the card with the name, and click its Add to Cart button
-    context.page.click(f'.product-card:has-text("{name}") .btn-primary')
+    # Find the card with the name
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    expect(card).to_be_visible(timeout=10000)
     
-    # Wait for state update
-    context.page.wait_for_timeout(1500)
+    # Scroll into view
+    card.scroll_into_view_if_needed()
+    
+    # Click its primary button (Add to Cart)
+    # We target the button that isn't 'Out of Stock'
+    btn = card.locator('button.btn-primary:not(:disabled)')
+    if btn.count() == 0:
+        # If disabled, try to replenish via API and refresh
+        response = context.api_session.get(f"{context.base_api_url}/products/")
+        product = next((p for p in response.json() if p['name'] == actual_name), None)
+        if product:
+            context.api_session.put(f"{context.base_api_url}/products/{product['id']}", json={
+                "is_active": True,
+                "stock": 100
+            })
+            context.page.reload()
+            context.page.wait_for_selector('.product-card', state='visible', timeout=10000)
+            card = context.page.locator('.product-card', has_text=actual_name).first
+            btn = card.locator('button.btn-primary:not(:disabled)')
+
+    btn.click()
+    
+    # Wait for store sync / notification
+    context.page.wait_for_timeout(1000)
 
 @when('I go to the Cart page')
 def step_impl(context):
