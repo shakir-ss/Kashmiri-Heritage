@@ -14,12 +14,12 @@
           </div>
         </template>
         <template v-else>
-          <div class="hero-badge">Authentic & Handcrafted</div>
-          <h1>Bringing the Heart of <span>Kashmir</span> to Your Home</h1>
-          <p>Premium dry fruits, exquisite Pashminas, and timeless handicrafts sourced directly from the valleys of Kashmir.</p>
+          <div class="hero-badge">Direct from the Valley</div>
+          <h1>Authentic Kashmiri <span>Heritage</span> & Artisanal Treasures</h1>
+          <p>Exquisite Pashminas, Premium Organic Dry Fruits, and Handcrafted Papier Mâché—sourced directly from the 100 villages of Kashmir.</p>
           <div class="hero-actions">
-            <router-link to="/products" class="btn btn-secondary">Shop Collection</router-link>
-            <button @click="showWalnutBanner = true" class="btn btn-outline-white">Special Offers</button>
+            <router-link to="/products" class="btn btn-secondary">Explore the Catalog</router-link>
+            <router-link to="/about" class="btn btn-outline-white">Our Village Story</router-link>
           </div>
         </template>
       </div>
@@ -47,8 +47,8 @@
         <div class="trust-item">
           <span class="trust-icon">✈️</span>
           <div class="trust-text">
-            <strong>Global Delivery</strong>
-            <p>Secure worldwide shipping</p>
+            <strong>Worldwide Express Shipping</strong>
+            <p>Tracked delivery to 20+ countries</p>
           </div>
         </div>
       </div>
@@ -240,6 +240,10 @@ const addToCart = (product) => {
   width: 100%;
   height: 100%;
   background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+  background-image: url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0.5s ease-in-out;
 }
 
 .hero-content {
