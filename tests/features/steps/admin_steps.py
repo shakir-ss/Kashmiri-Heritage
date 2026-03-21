@@ -53,3 +53,10 @@ def step_impl(context):
 
     first_row_text = rows.first.inner_text()
     assert "No orders placed yet" not in first_row_text, f"Expected orders but found: {first_row_text}"
+
+@when('I click on the product name "{name}" in the inventory table')
+def step_impl(context, name):
+    # Find the link within the inventory table that has the product name
+    link = context.page.locator('.admin-table tr').filter(has_text=name).locator('a.product-cell-link')
+    link.scroll_into_view_if_needed()
+    link.click()

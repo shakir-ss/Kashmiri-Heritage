@@ -197,10 +197,12 @@
         <tbody>
           <tr v-for="product in productStore.products" :key="product.id" :class="{'row-out-of-stock': product.stock <= 0, 'row-low-stock': product.stock > 0 && product.stock <= 5}">
             <td>
-              <div class="product-cell">
-                <img :src="product.image_url || 'https://via.placeholder.com/40'" class="mini-thumb" />
-                <strong>{{ product.name }}</strong>
-              </div>
+              <router-link :to="'/products/' + product.id" class="product-cell-link">
+                <div class="product-cell">
+                  <img :src="product.image_url || 'https://via.placeholder.com/40'" class="mini-thumb" />
+                  <strong>{{ product.name }}</strong>
+                </div>
+              </router-link>
             </td>
             <td><span class="category-pill">{{ product.category }}</span></td>
             <td>₹{{ product.price }}</td>
@@ -284,8 +286,15 @@
           </div>
           <div class="form-group">
             <label for="prod-image">Main Image URL</label>
-            <input id="prod-image" v-model="form.image_url" placeholder="https://..." required />
+            <div class="image-input-group">
+              <input id="prod-image" v-model="form.image_url" placeholder="https://..." />
+              <button type="button" @click="openUploadWidget" class="btn btn-secondary btn-sm">Upload from Cloud</button>
+            </div>
+            <div v-if="form.image_url" class="image-preview mt-2">
+              <img :src="form.image_url" alt="Preview" style="max-height: 100px; border-radius: 8px;" />
+            </div>
           </div>
+
           <div class="form-group">
             <label>Additional Images (Optional)</label>
             <div v-for="(img, index) in form.additional_images" :key="index" class="image-input-row">
@@ -377,6 +386,51 @@ const fetchInquiries = async () => {
 
 const viewInquiry = (inquiry) => {
   alert(`Inquiry from ${inquiry.name}\nSubject: ${inquiry.subject}\n\nMessage:\n${inquiry.message}\n\nContact:\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone || 'N/A'}`)
+}
+
+const openUploadWidget = () => {
+  // Check if cloudinary is loaded
+  if (!window.cloudinary) {
+    alert("Cloudinary script not loaded yet. Please refresh the page.")
+    return
+  }
+
+  const widget = window.cloudinary.createUploadWidget(
+    {
+      cloudName: 'dghwqmarz', // Replace with your Cloudinary Cloud Name
+      uploadPreset: 'hundred_villages_preset', // Replace with your Unsigned Upload Preset
+      sources: ['local', 'url', 'camera'],
+      multiple: false,
+      cropping: true,
+      showSkipCropButton: false,
+      croppingAspectRatio: 0.75, // 3:4 Portrait for premium look
+      clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
+      styles: {
+        palette: {
+          window: "#FFFFFF",
+          windowBorder: "#90A0B3",
+          tabIcon: "#4a2c2a",
+          menuIcons: "#5A616A",
+          textDark: "#000000",
+          textLight: "#FFFFFF",
+          link: "#4a2c2a",
+          action: "#4a2c2a",
+          inactiveTabIcon: "#0E2F5A",
+          error: "#F44235",
+          inProgress: "#0078FF",
+          complete: "#20B832",
+          sourceBg: "#E4EBF1"
+        }
+      }
+    },
+    (error, result) => {
+      if (!error && result && result.event === "success") {
+        console.log("Done! Here is the image info: ", result.info)
+        form.value.image_url = result.info.secure_url
+      }
+    }
+  )
+  widget.open()
 }
 
 const updateInquiryStatus = async (id, newStatus) => {
@@ -555,6 +609,16 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.product-cell-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.product-cell-link:hover .product-cell strong {
+  color: var(--secondary);
 }
 
 .mini-thumb {
