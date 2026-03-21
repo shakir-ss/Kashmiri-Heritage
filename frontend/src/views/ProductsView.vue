@@ -12,7 +12,7 @@
           v-for="cat in productStore.categories" 
           :key="cat.id"
           @click="selectCategory(cat.slug)"
-          :class="{ active: selectedCategory === cat.slug }"
+          :class="{ active: selectedCategory == cat.slug || selectedCategory == cat.id }"
         >{{ cat.name }}</button>
       </div>
     </aside>
@@ -49,7 +49,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useAnalyticsStore } from '../stores/analyticsStore'
@@ -58,17 +59,34 @@ import ProductCard from '../components/ProductCard.vue'
 const productStore = useProductStore()
 const cartStore = useCartStore()
 const analyticsStore = useAnalyticsStore()
+const route = useRoute()
+
 const selectedCategory = ref(null)
 const searchQuery = ref('')
 
-onMounted(() => {
-  productStore.fetchCategories()
-  productStore.fetchProducts()
+const syncFiltersFromRoute = () => {
+  const cat = route.query.category || null
+  const search = route.query.search || ''
+  
+  selectedCategory.value = cat
+  searchQuery.value = search
+  
+  productStore.fetchProducts({ category: cat, search: search })
+}
+
+onMounted(async () => {
+  await productStore.fetchCategories()
+  syncFiltersFromRoute()
 })
 
-const selectCategory = (slug) => {
-  selectedCategory.value = slug
-  productStore.fetchProducts({ category: slug, search: searchQuery.value })
+// Watch for route changes (e.g. clicking different categories in header/footer)
+watch(() => route.query, () => {
+  syncFiltersFromRoute()
+}, { deep: true })
+
+const selectCategory = (slugOrId) => {
+  selectedCategory.value = slugOrId
+  productStore.fetchProducts({ category: slugOrId, search: searchQuery.value })
 }
 
 const handleSearch = () => {

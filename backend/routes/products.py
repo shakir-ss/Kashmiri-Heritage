@@ -90,15 +90,23 @@ def delete_category(current_user, id):
 
 @products_bp.route('/', methods=['GET'])
 def get_products():
-    category_slug = request.args.get('category')
+    category_param = request.args.get('category')
     search = request.args.get('search')
     
     query = Product.query.filter_by(is_active=True)
     
-    if category_slug:
-        category = Category.query.filter_by(slug=category_slug).first()
-        if category:
-            query = query.filter_by(category_id=category.id)
+    if category_param:
+        # Check if it's an ID (numeric) or a slug
+        if category_param.isdigit():
+            query = query.filter_by(category_id=int(category_param))
+        else:
+            category = Category.query.filter_by(slug=category_param).first()
+            if category:
+                query = query.filter_by(category_id=category.id)
+            else:
+                # If slug not found, return empty list or ignore filter
+                # For now, let's just make the query return nothing to be strict
+                query = query.filter(Product.id == -1)
             
     if search:
         query = query.filter(Product.name.contains(search))

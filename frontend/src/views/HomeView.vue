@@ -72,7 +72,7 @@
           <div class="cat-image" :style="{ backgroundImage: `url(${cat.image})` }"></div>
           <div class="cat-info">
             <h3>{{ cat.name }}</h3>
-            <router-link :to="{ name: 'products', query: { category: cat.id } }" class="btn-link">View All Collection →</router-link>
+            <router-link :to="{ name: 'products', query: { category: cat.slug } }" class="btn-link">View All Collection →</router-link>
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@
               <span class="stat-label">Per Masterpiece</span>
             </div>
           </div>
-          <router-link to="/products?category=2" class="btn btn-primary">Meet the Artisans</router-link>
+          <router-link to="/products?category=pashmina-shawls" class="btn btn-primary">Meet the Artisans</router-link>
         </div>
       </div>
     </section>
@@ -199,9 +199,9 @@ const showWalnutBanner = ref(false)
 const b64_img = (color_hex) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23${color_hex}'/%3E%3C/svg%3E`
 
 const categories = [
-  { id: 1, name: 'Premium Dry Fruits', image: b64_img('4a2c2a') },
-  { id: 2, name: 'Pashmina & Kani', image: b64_img('2d5a27') },
-  { id: 3, name: 'Artistic Papier Mâché', image: b64_img('d4af37') }
+  { id: 124, slug: 'dry-fruits', name: 'Premium Dry Fruits', image: b64_img('4a2c2a') },
+  { id: 125, slug: 'pashmina-shawls', name: 'Pashmina & Kani', image: b64_img('2d5a27') },
+  { id: 126, slug: 'papier-mache', name: 'Artistic Papier Mâché', image: b64_img('d4af37') }
 ]
 
 onMounted(() => {
