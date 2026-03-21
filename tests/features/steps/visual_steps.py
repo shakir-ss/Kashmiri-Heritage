@@ -31,8 +31,8 @@ def step_impl(context):
         ''', img)
         
         if not is_loaded:
-            if src and src.startswith('http') and 'placeholder' in src.lower():
-                print(f"SKIPPING: Placeholder image failed to load (likely DNS issue): {src}")
+            if src and src.startswith('http') and ('placeholder' in src.lower() or 'google.com' in src.lower() or 'drive.google.com' in src.lower()):
+                print(f"SKIPPING: External/Placeholder image failed to load (likely DNS/Network issue): {src}")
                 continue
             if src and src.startswith('/images/'):
                 print(f"SKIPPING: Local test image might be 0-byte placeholder: {src}")

@@ -94,29 +94,25 @@
       <div class="details-content card kashmiri-pattern" v-html="formattedDetails"></div>
     </div>
 
-    <!-- Artisan Heritage Section (Canva Inspired) -->
-    <section class="artisan-heritage mt-4">
+    <!-- Dynamic Heritage Section (Canva Inspired) -->
+    <section class="artisan-heritage mt-4" v-if="heritageContent">
       <div class="heritage-card card">
         <div class="heritage-grid">
           <div class="heritage-text">
-            <span class="heritage-label">Artisan Heritage</span>
-            <h2>The Hands Behind the Craft</h2>
-            <p>Every product in our collection tells a story of generations. Sourced from the high-altitude valleys where the air is pure and the traditions are deep-rooted.</p>
+            <span class="heritage-label">{{ heritageContent.label }}</span>
+            <h2>{{ heritageContent.title }}</h2>
+            <p>{{ heritageContent.description }}</p>
             
             <div class="heritage-features">
-              <div class="h-feature">
-                <strong>The Roots</strong>
-                <p>Authentically harvested from the sun-drenched orchards of Srinagar and Ganderbal.</p>
-              </div>
-              <div class="h-feature">
-                <strong>The Craft</strong>
-                <p>Processed using traditional methods preserved by local Kashmiri families for centuries.</p>
+              <div class="h-feature" v-for="(feature, idx) in heritageContent.features" :key="idx">
+                <strong>{{ feature.name }}</strong>
+                <p>{{ feature.text }}</p>
               </div>
             </div>
           </div>
           <div class="heritage-visual">
             <div class="heritage-img-wrapper">
-              <img src="https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg" alt="Artisan at work" />
+              <img :src="heritageContent.image" :alt="heritageContent.title" />
               <div class="img-overlay-accent"></div>
             </div>
           </div>
@@ -186,6 +182,52 @@ const formattedDetails = computed(() => {
   if (!product.value?.details) return ''
   // Basic newline to <br> for simple formatting
   return product.value.details.replace(/\n/g, '<br>')
+})
+
+const heritageContent = computed(() => {
+  if (!product.value) return null
+
+  const category = product.value.category?.toLowerCase() || ''
+  
+  // Theme 1: Handicrafts (Pashmina, Kani, Papier Mache, Woodwork)
+  if (category.includes('pashmina') || category.includes('kani') || category.includes('mâché') || category.includes('handicraft')) {
+    return {
+      label: 'Artisan Heritage',
+      title: 'The Hands Behind the Craft',
+      description: 'Every piece in our collection is a labor of love, hand-spun and hand-woven using traditional Kashmiri looms preserved for centuries.',
+      image: 'https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg',
+      features: [
+        { name: 'Ancient Looms', text: 'Crafted on traditional wooden looms by master weavers in old Srinagar.' },
+        { name: 'Heirloom Quality', text: 'Designed to last generations, carrying the artistic soul of the Valley.' }
+      ]
+    }
+  }
+  
+  // Theme 2: Saffron & Spices (High Potency, Purity)
+  if (category.includes('saffron') || category.includes('spice')) {
+    return {
+      label: 'Pure Essence',
+      title: 'The Soil of Pampore',
+      description: 'Our saffron is harvested from the mineral-rich Karewas of Pampore, known worldwide for producing the highest crocin content.',
+      image: 'https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg', // Replace with Saffron image in production
+      features: [
+        { name: 'Highest Potency', text: 'Grade A++ stigmas, hand-picked during the peak autumn bloom.' },
+        { name: 'Mineral-Rich', text: 'Glacial-fed soil gives our spices a unique and intense flavor profile.' }
+      ]
+    }
+  }
+
+  // Theme 3: Default / Dry Fruits / Honey (Glacial Harvest)
+  return {
+    label: 'Glacial Harvest',
+    title: 'Nurtured by the Himalayas',
+    description: 'Sourced from the sun-drenched orchards of Ganderbal and Pulwama, where the air is pure and the water is glacial.',
+    image: 'https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg', // Replace with Orchard image in production
+    features: [
+      { name: 'Sun-Dried', text: 'Naturally dried in the crisp mountain air to preserve nutrients and crunch.' },
+      { name: 'Small-Batch', text: 'Sourced directly from family cooperatives to ensure zero preservatives.' }
+    ]
+  }
 })
 
 const addToCart = () => {

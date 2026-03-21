@@ -40,7 +40,8 @@ def seed():
             # Dry Fruits
             Product(
                 name="Premium Mamra Almonds", slug="mamra-almonds", category_id=categories[0].id,
-                description="The richest variety of almonds, grown organically in the high altitudes of Kashmir.",
+                description="The richest variety of almonds, grown" \
+                " organically in the high altitudes of Kashmir.",
                 price=1800, discount_price=1650, stock=50,
                 image_url=b64_img("4a2c2a"), is_active=True,
                 details="""Our Mamra Almonds are sourced from the high-altitude orchards of Ganderbal. Unlike regular almonds, Mamra is characterized by its concave shape and higher oil content.

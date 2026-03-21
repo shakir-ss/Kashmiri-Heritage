@@ -149,6 +149,7 @@ def get_product(id):
         'discount_price': product.discount_price,
         'stock': product.stock,
         'image_url': product.image_url,
+        'category': product.category.name if product.category else None,
         'category_id': product.category_id,
         'images': [img.image_url for img in product.images],
         'weight_grams': product.weight_grams,

@@ -77,3 +77,20 @@ Feature: Product Management
         When I edit the category "Handicrafts" to name "Art & Crafts"
         And I click the modal button "Save Category"
         Then I should see the category "Art & Crafts" in the category list
+
+    @ui @smoke @navigation
+    Scenario: Navigate to filtered products from Homepage Heritage Collections
+      Given I am on the Home page
+      When I click on the "Pashmina & Kani" category card
+      Then I should be on the Products page
+      And the "Pashmina & Kani" category should be active in the sidebar
+
+    @ui @regression @heritage
+    Scenario: Verify dynamic Artisan Heritage section content based on category
+      Given I am on the Products page
+      When I click on product "Premium Mamra Almonds"
+      Then I should see the Heritage Section with label "Glacial Harvest" and title "Nurtured by the Himalayas"
+      When I am on the Products page
+      And I click on product "Hand-Embroidered Sozni Pashmina"
+      Then I should see the Heritage Section with label "Artisan Heritage" and title "The Hands Behind the Craft"
+

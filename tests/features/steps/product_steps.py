@@ -122,11 +122,22 @@ def step_impl(context, name, status, alt_status):
     card = context.page.locator('.product-card', has_text=actual_name).first
     expect(card).to_contain_text(re.compile(f"{status}|{alt_status}"))
 
-@when('I click on product "{name}"')
-@given('I click on product "{name}"')
+@when('I click on the "{name}" category card')
 def step_impl(context, name):
-    actual_name = context.last_product_name if name == "Limited Edition Box" or name == "Multi-Pack Saffron" or name == "Local Image Product" else name
-    context.page.locator('.product-card', has_text=actual_name).first.click()
+    # Find the category card by name and click the 'View All' link inside it
+    card = context.page.locator('.category-card', has_text=name).first
+    card.locator('.btn-link').click()
+
+@then('the "{name}" category should be active in the sidebar')
+def step_impl(context, name):
+    # Check for the active button in the sidebar filter list
+    active_btn = context.page.locator('.filter-list button.active')
+    expect(active_btn).to_have_text(name)
+
+@then('I should be on the Products page')
+def step_impl(context):
+    expect(context.page).to_have_url(re.compile(r".*/products(\?.*)?$"))
+    expect(context.page.locator('h3', has_text="Categories")).to_be_visible()
 
 @then('I should see the product detail page for "{name}"')
 def step_impl(context, name):
@@ -229,6 +240,14 @@ def step_impl(context, name):
         context.page.screenshot(path="error_product_list.png")
         raise e
 
+@when('I click on product "{name}"')
+def step_impl(context, name):
+    # Use unique name if applicable
+    actual_name = getattr(context, 'last_product_name', name) if name in ["Multi-Pack Saffron", "Local Image Product", "Kashmiri Kahwa Set"] else name
+    # Find the product card by name and click the link or the card itself
+    card = context.page.locator('.product-card', has_text=actual_name).first
+    card.click()
+
 @when('I edit the category "{name}" to name "{new_name}"')
 def step_impl(context, name, new_name):
     # Find the row with category name and click Edit
@@ -327,6 +346,12 @@ def step_impl(context, name):
 @then('the price should show "{price}"')
 def step_impl(context, price):
     expect(context.page.locator('.current-price')).to_contain_text(price)
+
+@then('I should see the Heritage Section with label "{label}" and title "{title}"')
+def step_impl(context, label, title):
+    heritage_section = context.page.locator('.artisan-heritage')
+    expect(heritage_section.locator('.heritage-label')).to_have_text(label)
+    expect(heritage_section.locator('h2')).to_have_text(title)
 
 @when('I click the modal button "{button_text}"')
 @given('I click the modal button "{button_text}"')
