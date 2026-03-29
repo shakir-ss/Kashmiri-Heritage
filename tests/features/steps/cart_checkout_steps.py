@@ -186,3 +186,79 @@ def step_impl(context, name):
     import re
     context.page.wait_for_url(re.compile(r".*/products/\d+"))
     expect(context.page.locator('h1')).to_contain_text(name)
+
+# --- RAZORPAY SPECIFIC STEPS ---
+
+@when('I click the button "{label}"')
+def step_impl(context, label):
+    # Search for button with text or containing text
+    # Prefer the one in the checkout form if it exists
+    btn = context.page.locator('.checkout-form button', has_text=label).first
+    if not btn.is_visible():
+        btn = context.page.get_by_role("button", name=label).first
+    if not btn.is_visible():
+        btn = context.page.locator("button", has_text=label).first
+    
+    btn.scroll_into_view_if_needed()
+    btn.click()
+
+@then('I should see the Razorpay checkout modal')
+def step_impl(context):
+    try:
+        # Razorpay modal is an iframe with class 'razorpay-checkout-frame'
+        context.page.wait_for_selector('iframe.razorpay-checkout-frame', state='visible', timeout=20000)
+        context.razorpay_frame = context.page.frame_locator('iframe.razorpay-checkout-frame')
+        # Verify we can see common RZP elements inside the frame
+        expect(context.razorpay_frame.get_by_text("The Hundred Villages")).to_be_visible()
+    except Exception as e:
+        context.page.screenshot(path="razorpay_modal_fail.png")
+        # Also print page content to see if there's an error message
+        print(f"PAGE CONTENT ON FAIL: {context.page.content()[:500]}...")
+        raise e
+
+@when('I complete the Razorpay payment with test card "{card_num}"')
+def step_impl(context, card_num):
+    # 1. Select Card Payment in RZP Modal
+    # Note: RZP UI might change, but these are common IDs/Texts
+    card_opt = context.razorpay_frame.get_by_text("Card").first
+    card_opt.click()
+
+    # 2. Fill Card Details
+    context.razorpay_frame.get_by_placeholder("Card Number").fill(card_num)
+    context.razorpay_frame.get_by_placeholder("MM / YY").fill("12/30")
+    context.razorpay_frame.get_by_placeholder("CVV").fill("111")
+    
+    # 3. Click Pay Now
+    context.razorpay_frame.get_by_role("button", name="Pay Now").click()
+
+    # 4. Handle "Success" scenario if RZP asks for OTP or Skip Saving Card
+    # Sometimes RZP asks "Skip saving card" - click it if it appears
+    skip_btn = context.razorpay_frame.get_by_role("button", name="Skip Saving Card").first
+    if skip_btn.is_visible(timeout=2000):
+        skip_btn.click()
+
+    # 5. Success/Failure page inside RZP modal
+    # In test mode, RZP sometimes shows "Success" / "Failure" buttons
+    success_btn = context.razorpay_frame.get_by_role("button", name="Success").first
+    if success_btn.is_visible(timeout=5000):
+        success_btn.click()
+
+    # Wait for frame to disappear and UI to update
+    context.page.wait_for_selector('iframe.razorpay-checkout-frame', state='hidden', timeout=15000)
+
+@then('my order status should be "{status}" in the database')
+def step_impl(context, status):
+    # Login to get token
+    login_res = requests.post(f"{context.base_api_url}/auth/login", json={
+        "email": "root@thehundredvillages.com",
+        "password": "root123"
+    })
+    token = login_res.json()['token']
+    
+    # Fetch orders
+    orders_res = requests.get(f"{context.base_api_url}/orders/", headers={"Authorization": f"Bearer {token}"})
+    orders = orders_res.json()
+    
+    # Get the latest order
+    latest_order = sorted(orders, key=lambda x: x['id'], reverse=True)[0]
+    assert latest_order['status'] == status, f"Expected status {status} but got {latest_order['status']}"

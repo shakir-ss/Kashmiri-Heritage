@@ -344,6 +344,7 @@ const handleCheckout = async () => {
   
   loading.value = true
   try {
+    // 1. Create Order & Handshake with Backend
     const res = await axios.post('/api/orders/place', {
       name: form.value.name,
       address: form.value.address,
@@ -354,10 +355,46 @@ const handleCheckout = async () => {
       phone: form.value.phone,
       payment_mode: form.value.payment_mode
     })
-    successOrder.value = res.data.order_id
-    cartStore.clearCart()
+
+    const orderData = res.data;
+
+    // 2. Configure Razorpay Options
+    const options = {
+      key: orderData.key,
+      amount: Math.round(orderData.amount * 100),
+      currency: "INR",
+      name: "The Hundred Villages",
+      description: "Premium Kashmiri Acquisition",
+      order_id: orderData.razorpay_order_id,
+      handler: async function (response) {
+        // 3. Verify Payment with Backend (Final Handshake)
+        try {
+          const verifyRes = await axios.post('/api/orders/verify', {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            order_id: orderData.order_id
+          });
+          successOrder.value = verifyRes.data.order_id;
+          cartStore.clearCart();
+        } catch (err) {
+          alert("Payment verification failed. Please contact support.");
+        }
+      },
+      prefill: {
+        name: form.value.name,
+        contact: form.value.phone
+      },
+      theme: {
+        color: "#3d2b1f" // Walnut Brown
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+
   } catch (err) {
-    alert(err.response?.data?.message || 'Transaction could not be completed.')
+    alert(err.response?.data?.message || 'Handshake could not be initiated.')
   } finally {
     loading.value = false
   }

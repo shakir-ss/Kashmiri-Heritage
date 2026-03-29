@@ -15,8 +15,8 @@ class Config:
     TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
     
     # Payment Gateways
-    RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID')
-    RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET')
+    RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_KRKbOD0PJbYKoB')
+    RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '3vcmj8AmebbfOqbDAMbhmjon')
     STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
 class DevelopmentConfig(Config):
