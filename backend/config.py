@@ -22,12 +22,10 @@ class Config:
 
     # Programmatic SSL Injection for Production
     if os.environ.get('FLASK_CONFIG') == 'prod':
-        # TiDB Serverless requires SSL. On Render/Linux, we can't always rely on URL params.
-        # This forces the driver to use SSL without strict identity checks if necessary.
+        # TiDB Serverless requires SSL.
+        # This empty dict {} tells pymysql to use SSL without strict verification.
         SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
-            "ssl": {
-                "fake_parameter_to_force_ssl": True # Forces PyMySQL to initiate SSL handshake
-            }
+            "ssl": {}
         }
 
     # If the database URL contains SSL parameters, they will be parsed automatically
