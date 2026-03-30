@@ -7,10 +7,19 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key-123')
     
     # DATABASE CONFIG (TiDB Cloud / Secure MySQL)
-    # Aggressively remove all whitespace/newlines from the URL
     raw_db_url = os.environ.get('DATABASE_URL')
     if raw_db_url:
-        SQLALCHEMY_DATABASE_URI = "".join(raw_db_url.split())
+        # 1. Aggressively clean all whitespace/newlines
+        clean_url = "".join(raw_db_url.split())
+        
+        # 2. Force pymysql driver for portability
+        if clean_url.startswith('mysql://'):
+            clean_url = clean_url.replace('mysql://', 'mysql+pymysql://', 1)
+        elif clean_url.startswith('mysql+mysqldb://'):
+            clean_url = clean_url.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
+            
+        SQLALCHEMY_DATABASE_URI = clean_url
+        print(f"DEBUG: Database URI initialized (driver: pymysql)")
     else:
         SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits'
     
@@ -20,21 +29,11 @@ class Config:
         "pool_pre_ping": True,
     }
 
-    # Programmatic SSL Injection for Production
-    if os.environ.get('FLASK_CONFIG') == 'prod':
-        # TiDB Serverless requires SSL.
-        # This empty dict {} tells pymysql to use SSL without strict verification.
-        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
-            "ssl": {}
-        }
-
-    # If the database URL contains SSL parameters, they will be parsed automatically
-    # but we ensure the dialect is correct if using pymysql
-    if SQLALCHEMY_DATABASE_URI.startswith('mysql://'):
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('mysql://', 'mysql+pymysql://', 1)
-    elif SQLALCHEMY_DATABASE_URI.startswith('mysql+mysqldb://'):
-        # For Render/Vercel, pymysql is often more portable than mysqlclient
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
+    # Programmatic SSL Injection for ALL cloud connections
+    # Using a format that PyMySQL understands as "enable SSL"
+    SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
+        "ssl": {} 
+    }
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-456')
