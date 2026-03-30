@@ -7,8 +7,12 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key-123')
     
     # DATABASE CONFIG (TiDB Cloud / Secure MySQL)
-    # Recommended format: mysql+pymysql://user:pass@host:port/db?ssl_ca=path/to/cert
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits')
+    # Aggressively remove all whitespace/newlines from the URL
+    raw_db_url = os.environ.get('DATABASE_URL')
+    if raw_db_url:
+        SQLALCHEMY_DATABASE_URI = "".join(raw_db_url.split())
+    else:
+        SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits'
     
     # Special engine options for secure cloud connections
     SQLALCHEMY_ENGINE_OPTIONS = {
