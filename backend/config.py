@@ -5,7 +5,25 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key-123')
+    
+    # DATABASE CONFIG (TiDB Cloud / Secure MySQL)
+    # Recommended format: mysql+pymysql://user:pass@host:port/db?ssl_ca=path/to/cert
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits')
+    
+    # Special engine options for secure cloud connections
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_recycle": 280,
+        "pool_pre_ping": True,
+    }
+
+    # If the database URL contains SSL parameters, they will be parsed automatically
+    # but we ensure the dialect is correct if using pymysql
+    if SQLALCHEMY_DATABASE_URI.startswith('mysql://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('mysql://', 'mysql+pymysql://', 1)
+    elif SQLALCHEMY_DATABASE_URI.startswith('mysql+mysqldb://'):
+        # For Render/Vercel, pymysql is often more portable than mysqlclient
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-456')
     
