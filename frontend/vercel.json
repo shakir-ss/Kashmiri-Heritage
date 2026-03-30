@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://thv-1.onrender.com/api/$1" },
+    { "source": "/api/:path*", "destination": "https://thv-1.onrender.com/api/:path*" },
+    { "source": "/health", "destination": "https://thv-1.onrender.com/health" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

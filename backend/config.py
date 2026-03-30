@@ -14,11 +14,21 @@ class Config:
     else:
         SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits'
     
-    # Special engine options for secure cloud connections
+    # special engine options for cloud DBs
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_recycle": 280,
         "pool_pre_ping": True,
     }
+
+    # Programmatic SSL Injection for Production
+    if os.environ.get('FLASK_CONFIG') == 'prod':
+        # TiDB Serverless requires SSL. On Render/Linux, we can't always rely on URL params.
+        # This forces the driver to use SSL without strict identity checks if necessary.
+        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
+            "ssl": {
+                "fake_parameter_to_force_ssl": True # Forces PyMySQL to initiate SSL handshake
+            }
+        }
 
     # If the database URL contains SSL parameters, they will be parsed automatically
     # but we ensure the dialect is correct if using pymysql
