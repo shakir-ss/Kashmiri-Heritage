@@ -30,6 +30,14 @@ def create_app(config_name):
     app.register_blueprint(wishlist_bp, url_prefix='/api/wishlist')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
 
+    @app.route('/', methods=['GET'])
+    def index():
+        return jsonify({
+            "message": "Welcome to The Hundred Villages API",
+            "documentation": "https://github.com/shakir-ss/Kashmiri-Heritage",
+            "health_check": "/health"
+        }), 200
+
     @app.route('/health', methods=['GET'])
     def health_check():
         return jsonify({"status": "healthy", "service": "The Hundred Villages API"}), 200
