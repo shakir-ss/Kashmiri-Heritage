@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
+import os
 from config import config_by_name
 from models import db, bcrypt
 
@@ -52,8 +53,9 @@ def create_app(config_name):
 
     return app
 
+# Expose app at top level for Gunicorn
+config_name = os.environ.get('FLASK_CONFIG', 'prod')
+app = create_app(config_name)
+
 if __name__ == "__main__":
-    import os
-    config_name = os.environ.get('FLASK_CONFIG', 'dev')
-    app = create_app(config_name)
     app.run(host='0.0.0.0', port=5000, use_reloader=False)
