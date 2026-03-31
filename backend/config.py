@@ -18,6 +18,13 @@ class Config:
         elif clean_url.startswith('mysql+mysqldb://'):
             clean_url = clean_url.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
             
+        # 3. Strip incompatible query parameters (ssl_mode, ssl_ca) that cause TypeError in pymysql
+        if '?' in clean_url:
+            base_url, query = clean_url.split('?', 1)
+            # Filter out known-bad params for pymysql
+            params = [p for p in query.split('&') if not p.startswith(('ssl_mode', 'ssl_ca'))]
+            clean_url = base_url + ('?' + '&'.join(params) if params else '')
+            
         SQLALCHEMY_DATABASE_URI = clean_url
         print(f"DEBUG: Database URI initialized (driver: pymysql)")
     else:
@@ -30,9 +37,9 @@ class Config:
     }
 
     # Programmatic SSL Injection for ALL cloud connections
-    # Using a format that PyMySQL understands as "enable SSL"
+    # Using the exact parameter that worked in check_sync.py
     SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
-        "ssl": {} 
+        "ssl_verify_identity": True 
     }
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
