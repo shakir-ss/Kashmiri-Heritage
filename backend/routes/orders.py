@@ -145,7 +145,7 @@ def verify_payment(current_user):
 @orders_bp.route('/', methods=['GET'])
 @token_required
 def get_user_orders(current_user):
-    orders = Order.query.filter_by(user_id=current_user.id).all()
+    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
     return jsonify([{
         'id': o.id,
         'total_amount': o.total_amount,
@@ -157,3 +157,39 @@ def get_user_orders(current_user):
             'price': item.price_at_purchase
         } for item in o.items]
     } for o in orders])
+
+@orders_bp.route('/admin', methods=['GET'])
+@token_required
+@admin_required
+def get_all_orders(current_user):
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    return jsonify([{
+        'id': o.id,
+        'user': o.user.name,
+        'user_email': o.user.email,
+        'total_amount': o.total_amount,
+        'prepaid_amount': o.prepaid_amount,
+        'balance_on_delivery': o.balance_on_delivery,
+        'status': o.status,
+        'address': o.address,
+        'phone': o.phone,
+        'created_at': o.created_at,
+        'items': [{
+            'name': item.product.name,
+            'quantity': item.quantity,
+            'price': item.price_at_purchase
+        } for item in o.items]
+    } for o in orders])
+
+@orders_bp.route('/<int:id>/status', methods=['PUT'])
+@token_required
+@admin_required
+def update_order_status(current_user, id):
+    order = Order.query.get_or_404(id)
+    data = request.get_json()
+    status = data.get('status')
+    if status:
+        order.status = status
+        db.session.commit()
+        return jsonify({'message': 'Order status updated successfully'})
+    return jsonify({'message': 'Status is required'}), 400
