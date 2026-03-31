@@ -18,6 +18,10 @@ class Config:
         elif clean_url.startswith('mysql+mysqldb://'):
             clean_url = clean_url.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
             
+        # 3. Strip ALL query parameters to prevent driver conflicts and handle them via connect_args
+        if '?' in clean_url:
+            clean_url = clean_url.split('?', 1)[0]
+            
         SQLALCHEMY_DATABASE_URI = clean_url
         print(f"DEBUG: Database URI initialized (driver: pymysql)")
     else:
@@ -30,9 +34,11 @@ class Config:
     }
 
     # Programmatic SSL Injection for ALL cloud connections
-    # Using a format that PyMySQL understands as "enable SSL"
+    # 'ssl': {} forces the driver to initiate SSL
+    # 'ssl_verify_identity': True ensures we match the TiDB Cloud requirement
     SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
-        "ssl": {} 
+        "ssl": {},
+        "ssl_verify_identity": True 
     }
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
