@@ -18,12 +18,9 @@ class Config:
         elif clean_url.startswith('mysql+mysqldb://'):
             clean_url = clean_url.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
             
-        # 3. Strip incompatible query parameters (ssl_mode, ssl_ca) that cause TypeError in pymysql
+        # 3. Strip ALL query parameters to prevent driver conflicts and handle them via connect_args
         if '?' in clean_url:
-            base_url, query = clean_url.split('?', 1)
-            # Filter out known-bad params for pymysql
-            params = [p for p in query.split('&') if not p.startswith(('ssl_mode', 'ssl_ca'))]
-            clean_url = base_url + ('?' + '&'.join(params) if params else '')
+            clean_url = clean_url.split('?', 1)[0]
             
         SQLALCHEMY_DATABASE_URI = clean_url
         print(f"DEBUG: Database URI initialized (driver: pymysql)")
@@ -37,8 +34,10 @@ class Config:
     }
 
     # Programmatic SSL Injection for ALL cloud connections
-    # Using the exact parameter that worked in check_sync.py
+    # 'ssl': {} forces the driver to initiate SSL
+    # 'ssl_verify_identity': True ensures we match the TiDB Cloud requirement
     SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
+        "ssl": {},
         "ssl_verify_identity": True 
     }
     
