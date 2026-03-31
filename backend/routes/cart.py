@@ -51,6 +51,15 @@ def update_cart(current_user):
         db.session.commit()
     return jsonify({'message': 'Cart updated'})
 
+@cart_bp.route('/<int:product_id>', methods=['DELETE'])
+@token_required
+def remove_from_cart(current_user, product_id):
+    item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+    return jsonify({'message': 'Item removed from cart'})
+
 @cart_bp.route('/clear', methods=['DELETE'])
 @token_required
 def clear_cart(current_user):
