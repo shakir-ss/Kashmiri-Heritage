@@ -1,4 +1,5 @@
 <template>
+  <Analytics />
   <div class="app-wrapper">
     <!-- Top Bar -->
     <div class="top-bar">
@@ -75,6 +76,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Analytics } from '@vercel/analytics/vue'
 import { useAuthStore } from './stores/authStore'
 import { useCartStore } from './stores/cartStore'
 import { useRouter } from 'vue-router'
