@@ -18,7 +18,7 @@ class Config:
         elif clean_url.startswith('mysql+mysqldb://'):
             clean_url = clean_url.replace('mysql+mysqldb://', 'mysql+pymysql://', 1)
             
-        # 3. Strip ALL query parameters to prevent driver conflicts and handle them via connect_args
+        # 3. Strip ALL query parameters to prevent driver conflicts
         if '?' in clean_url:
             clean_url = clean_url.split('?', 1)[0]
             
@@ -49,7 +49,7 @@ class Config:
     TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
     TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
     
-    # Payment Gateways (Use environment variables for these)
+    # Payment Gateways
     RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
     RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'placeholder_secret')
     STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
