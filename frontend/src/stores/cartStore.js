@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
+import { API_URL } from '../config'
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -41,7 +42,7 @@ export const useCartStore = defineStore('cart', {
       this.persist()
 
       if (auth.isAuthenticated) {
-        await axios.post('/api/cart/add', { product_id: product.id, quantity })
+        await axios.post(`${API_URL}/api/cart/add`, { product_id: product.id, quantity })
         await this.syncWithBackend()
       }
     },
@@ -62,7 +63,7 @@ export const useCartStore = defineStore('cart', {
       this.persist()
 
       if (auth.isAuthenticated) {
-        await axios.put('/api/cart/update', { product_id: productId, quantity })
+        await axios.put(`${API_URL}/api/cart/update`, { product_id: productId, quantity })
       }
     },
 
@@ -71,7 +72,7 @@ export const useCartStore = defineStore('cart', {
       if (!auth.isAuthenticated) return
 
       try {
-        const res = await axios.get('/api/cart/')
+        const res = await axios.get(`${API_URL}/api/cart/`)
         // Simple merge strategy: Backend wins
         if (res.data.length > 0) {
           this.items = res.data

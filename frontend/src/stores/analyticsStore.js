@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { API_URL } from '../config'
 
 export const useAnalyticsStore = defineStore('analytics', {
   state: () => ({
@@ -18,7 +19,7 @@ export const useAnalyticsStore = defineStore('analytics', {
     async fetchStats() {
       this.loading = true
       try {
-        const res = await axios.get('/api/analytics/stats')
+        const res = await axios.get(`${API_URL}/api/analytics/stats`)
         this.stats = res.data
       } catch (err) {
         this.error = 'Failed to fetch analytics data'
@@ -29,7 +30,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 
     async trackProductView(productId) {
       try {
-        await axios.post(`/api/analytics/view/${productId}`)
+        await axios.post(`${API_URL}/api/analytics/view/${productId}`)
       } catch (err) {
         // Silent error for tracking failure
         console.warn('Tracking failed for product:', productId)

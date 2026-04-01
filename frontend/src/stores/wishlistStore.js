@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
+import { API_URL } from '../config'
 
 export const useWishlistStore = defineStore('wishlist', {
   state: () => ({
@@ -15,7 +16,7 @@ export const useWishlistStore = defineStore('wishlist', {
       
       this.loading = true
       try {
-        const res = await axios.get('/api/wishlist/')
+        const res = await axios.get(`${API_URL}/api/wishlist/`)
         this.items = res.data
       } catch (err) {
         console.error('Failed to fetch wishlist:', err)
@@ -31,11 +32,12 @@ export const useWishlistStore = defineStore('wishlist', {
         return
       }
 
-      const index = this.items.findIndex(item => item.product_id === product.id)
+      const index = this.items.findIndex(item => item.product_id === (product.id || product.product_id))
       if (index > -1) {
         // Remove
         try {
-          await axios.delete(`/api/wishlist/remove/${product.id}`)
+          const pid = product.id || product.product_id
+          await axios.delete(`${API_URL}/api/wishlist/remove/${pid}`)
           this.items.splice(index, 1)
         } catch (err) {
           console.error('Failed to remove from wishlist:', err)
@@ -43,7 +45,7 @@ export const useWishlistStore = defineStore('wishlist', {
       } else {
         // Add
         try {
-          await axios.post('/api/wishlist/add', { product_id: product.id })
+          await axios.post(`${API_URL}/api/wishlist/add`, { product_id: product.id })
           this.items.push({
             product_id: product.id,
             name: product.name,
@@ -58,7 +60,7 @@ export const useWishlistStore = defineStore('wishlist', {
     },
 
     isInWishlist(productId) {
-      return this.items.some(item => item.product_id === productId)
+      return this.items.some(item => (item.product_id === productId || item.id === productId))
     }
   }
 })

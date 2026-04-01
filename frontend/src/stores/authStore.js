@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { API_URL } from '../config'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -24,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
     this.loading = true
     this.error = null
     try {
-      const response = await axios.post('/api/auth/login', { email, password })
+      const response = await axios.post(`${API_URL}/api/auth/login`, { email, password })
       this.token = response.data.token
       this.user = response.data.user
 
@@ -46,7 +47,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        await axios.post('/api/auth/register', { name, email, password })
+        await axios.post(`${API_URL}/api/auth/register`, { name, email, password })
         return true
       } catch (err) {
         this.error = err.response?.data?.message || 'Registration failed'
