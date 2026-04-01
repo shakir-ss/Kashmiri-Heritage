@@ -8,6 +8,8 @@ class Config:
     
     # DATABASE CONFIG (TiDB Cloud / Secure MySQL)
     raw_db_url = os.environ.get('DATABASE_URL')
+    is_cloud_db = False
+    
     if raw_db_url:
         # 1. Aggressively clean all whitespace/newlines
         clean_url = "".join(raw_db_url.split())
@@ -22,8 +24,13 @@ class Config:
         if '?' in clean_url:
             clean_url = clean_url.split('?', 1)[0]
             
+        # 4. Check if it's a cloud database (contains '.' and not localhost)
+        # This allows us to disable SSL for local development automatically
+        if 'localhost' not in clean_url and '127.0.0.1' not in clean_url:
+            is_cloud_db = True
+            
         SQLALCHEMY_DATABASE_URI = clean_url
-        print(f"DEBUG: Database URI initialized (driver: pymysql)")
+        print(f"DEBUG: Database URI initialized (driver: pymysql, cloud: {is_cloud_db})")
     else:
         SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:password@localhost/kashmiri_dry_fruits'
     
@@ -33,13 +40,17 @@ class Config:
         "pool_pre_ping": True,
     }
 
-    # Programmatic SSL Injection for ALL cloud connections
-    # 'ssl': {} forces the driver to initiate SSL
-    # 'ssl_verify_identity': True ensures we match the TiDB Cloud requirement
-    SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
-        "ssl": {},
-        "ssl_verify_identity": True 
-    }
+    # Programmatic SSL Injection - Only for Cloud Connections
+    if is_cloud_db:
+        # 'ssl': {} forces the driver to initiate SSL
+        # 'ssl_verify_identity': True ensures we match the TiDB Cloud requirement
+        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
+            "ssl": {},
+            "ssl_verify_identity": True 
+        }
+    else:
+        # Local development typically doesn't use SSL
+        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {}
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key-456')

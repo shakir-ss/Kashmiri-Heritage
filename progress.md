@@ -94,11 +94,22 @@
 - [x] BDD: Verified end-to-end variant creation and selection flow (100% pass)
 - [x] BDD: Verified local free shipping and partial payment breakdown (100% pass)
 
-## SESSION CONTINUITY NOTES
-- **Partial COD**: Backend `Order` model now tracks `prepaid_amount` and `balance_on_delivery`. Orders placed via COD are stored with status `partial_paid`.
-- **Shipping Radius**: Local pincodes are defined in `frontend/src/config.js`. Update this list to expand the free delivery zone.
-- **Stock Replenishment**: BDD tests now include a `replenish stock` step via API to prevent 400 errors during repeated automated runs.
-- **Form Locators**: Prefer using ID-based selectors (e.g. `input[id="address"]`) for checkout fields, as editorial labels can sometimes be complex for standard Playwright matching.
+## [PHASE 16] CLOUD SYNC & CI/CD STABILIZATION
+- [x] Backend: Implemented "Environment-Smart" SSL logic in `config.py` (Auto-enables SSL for TiDB Cloud, disables for local).
+- [x] Backend: Fixed `DATABASE_URL` parsing to aggressively strip query parameters causing driver crashes.
+- [x] Backend: Added missing Admin endpoints for order management and status updates.
+- [x] Frontend: Implemented dynamic `API_URL` handling across all Pinia stores for multi-env support.
+- [x] Frontend: Fixed blank Admin Dashboard by correcting data mapping and adding defensive checks.
+- [x] Frontend: Resolved local dev crashes by making Vercel Analytics conditional.
+- [x] CI/CD: Established Automated BDD Workflow via GitHub Actions with local MySQL container.
+- [x] CI/CD: Resolved Python 3.12 compatibility issues with `razorpay` and `setuptools`.
+- [x] Testing: Created local "Smoke Test" runner for high-velocity health checks.
 
-## CURRENT STATUS: **FEATURE COMPLETE (GLOBAL READY)**
-*The platform has successfully pivoted to a general store model with international shipping readiness, partial payments, and multi-variant cataloging, fully verified by a 100% passing BDD suite.*
+## SESSION CONTINUITY NOTES
+- **Multi-Env Support**: The frontend now requires `VITE_API_URL` to be set in Vercel settings for cloud deployments.
+- **SSL Detection**: `config.py` uses the hostname to decide whether to inject SSL arguments (triggered for any host that isn't `localhost` or `127.0.0.1`).
+- **Cart API**: Added a dedicated `DELETE /api/cart/<id>` endpoint for cleaner individual item removal.
+- **Razorpay Fix**: Upgraded `razorpay` to version 2.0.1+ to fix `pkg_resources` errors in the GitHub Actions environment.
+
+## CURRENT STATUS: **PRODUCTION & STAGING SYNCED**
+*The platform is now fully synchronized across Local, Staging, and Production environments, supported by an automated CI/CD pipeline and environment-aware configuration.*

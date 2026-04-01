@@ -1,5 +1,5 @@
 <template>
-  <Analytics />
+  <component :is="AnalyticsComponent" v-if="analyticsEnabled" />
   <div class="app-wrapper">
     <!-- Top Bar -->
     <div class="top-bar">
@@ -19,7 +19,6 @@
         
         <div class="nav-links">
           <router-link to="/products">Products</router-link>
-          <!-- <router-link to="/products?category=handicrafts">Handicrafts</router-link> -->
           
           <div class="nav-actions">
             <router-link to="/wishlist" class="nav-icon-link" title="Wishlist">
@@ -75,8 +74,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Analytics } from '@vercel/analytics/vue'
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useAuthStore } from './stores/authStore'
 import { useCartStore } from './stores/cartStore'
 import { useRouter } from 'vue-router'
@@ -85,6 +83,12 @@ const auth = useAuthStore()
 const cartStore = useCartStore()
 const router = useRouter()
 const scrolly = ref(0)
+
+// Conditional Analytics for Local Dev
+const analyticsEnabled = import.meta.env.VITE_VERCEL_ANALYTICS === 'true'
+const AnalyticsComponent = analyticsEnabled 
+  ? defineAsyncComponent(() => import(/* @vite-ignore */ '@vercel/analytics/vue').then(m => m.Analytics))
+  : null
 
 const handleScroll = () => {
   scrolly.value = window.scrollY
