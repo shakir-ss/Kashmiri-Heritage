@@ -45,6 +45,7 @@ jobs:
         env:
           DATABASE_URL: mysql+pymysql://root:password@127.0.0.1:3306/kashmiri_dry_fruits_test
         run: |
+          python backend/scripts/init_db.py
           python backend/scripts/update_db_schema.py
           python backend/scripts/register_root.py
 
