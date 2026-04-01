@@ -15,32 +15,33 @@ export const useAuthStore = defineStore('auth', {
   },
   
   actions: {
-    init() {
-      if (this.token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
-      }
-    },
-    async login(email, password) {
-      this.loading = true
-      this.error = null
-      try {
-        const response = await axios.post('/api/auth/login', { email, password })
-        this.token = response.data.token
-        this.user = response.data.user
-        
-        localStorage.setItem('token', this.token)
-        localStorage.setItem('user', JSON.stringify(this.user))
-        
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
-        return true
-      } catch (err) {
-        this.error = err.response?.data?.message || 'Login failed'
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-    
+  init() {
+    if (this.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+    }
+  },
+  async login(email, password) {
+    this.loading = true
+    this.error = null
+    try {
+      const response = await axios.post('/api/auth/login', { email, password })
+      this.token = response.data.token
+      this.user = response.data.user
+
+      localStorage.setItem('token', this.token)
+      localStorage.setItem('user', JSON.stringify(this.user))
+
+      // CRITICAL: Set the header for all subsequent requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+
+      return true
+    } catch (err) {
+      this.error = err.response?.data?.message || 'Login failed'
+      return false
+    } finally {
+      this.loading = false
+    }
+  },    
     async register(name, email, password) {
       this.loading = true
       this.error = null

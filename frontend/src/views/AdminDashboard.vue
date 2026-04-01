@@ -71,18 +71,22 @@
               <td>#{{ order.id }}</td>
               <td>
                 <div class="cust-info">
-                  <strong>{{ order.customer_name }}</strong>
-                  <small>{{ order.customer_email }}</small>
+                  <strong>{{ order.user }}</strong>
+                  <small>{{ order.user_email }}</small>
                 </div>
               </td>
               <td>{{ formatDate(order.created_at) }}</td>
               <td><strong>₹{{ order.total_amount }}</strong></td>
-              <td><span class="status-badge active">{{ order.status }}</span></td>
+              <td>
+                <span class="status-badge" :class="order.status">
+                  {{ order.status }}
+                </span>
+              </td>
               <td>
                 <button @click="viewOrderDetails(order)" class="btn-text">View Items</button>
               </td>
             </tr>
-            <tr v-if="orders.length === 0">
+            <tr v-if="orders && orders.length === 0">
               <td colspan="6" class="text-center">No orders placed yet.</td>
             </tr>
           </tbody>
@@ -169,7 +173,7 @@
                 </select>
               </td>
             </tr>
-            <tr v-if="inquiries.length === 0">
+            <tr v-if="inquiries && inquiries.length === 0">
               <td colspan="5" class="text-center">No inquiries yet.</td>
             </tr>
           </tbody>
@@ -221,6 +225,9 @@
               <button @click="editProduct(product)" class="btn-text">Edit</button>
               <button @click="productStore.deleteProduct(product.id)" class="btn-text delete">Delete</button>
             </td>
+          </tr>
+          <tr v-if="productStore.products && productStore.products.length === 0">
+              <td colspan="7" class="text-center">No products in inventory.</td>
           </tr>
         </tbody>
       </table>
