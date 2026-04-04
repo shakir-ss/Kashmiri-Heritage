@@ -9,17 +9,25 @@ app = create_app('dev')
 
 def seed():
     with app.app_context():
+        print("Ensuring tables exist...")
+        db.create_all()
         print("Cleaning up old data...")
-        # Clear child tables first
-        Analytics.query.delete()
-        CartItem.query.delete()
-        OrderItem.query.delete()
-        WishlistItem.query.delete()
-        ProductVariant.query.delete()
-        ProductImage.query.delete()
-        # Now clear parent tables
-        Product.query.delete()
-        Category.query.delete()
+        try:
+            # Clear child tables first
+            Analytics.query.delete()
+            CartItem.query.delete()
+            OrderItem.query.delete()
+            WishlistItem.query.delete()
+            ProductVariant.query.delete()
+            ProductImage.query.delete()
+            # Now clear parent tables
+            Product.query.delete()
+            Category.query.delete()
+            db.session.commit()
+            print("Old data cleared.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Cleanup skipped or failed (this is normal for first-time runs): {e}")
         
         print("Seeding Categories...")
         categories = [

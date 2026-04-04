@@ -42,7 +42,7 @@ export const useCartStore = defineStore('cart', {
       this.persist()
 
       if (auth.isAuthenticated) {
-        await axios.post(`${API_URL}/api/cart/add`, { product_id: product.id, quantity })
+        await axios.post('/api/cart/add', { product_id: product.id, quantity })
         await this.syncWithBackend()
       }
     },
@@ -63,7 +63,7 @@ export const useCartStore = defineStore('cart', {
       this.persist()
 
       if (auth.isAuthenticated) {
-        await axios.put(`${API_URL}/api/cart/update`, { product_id: productId, quantity })
+        await axios.put('/api/cart/update', { product_id: productId, quantity })
       }
     },
 
@@ -72,7 +72,7 @@ export const useCartStore = defineStore('cart', {
       if (!auth.isAuthenticated) return
 
       try {
-        const res = await axios.get(`${API_URL}/api/cart/`)
+        const res = await axios.get('/api/cart/')
         // Simple merge strategy: Backend wins
         if (res.data.length > 0) {
           this.items = res.data

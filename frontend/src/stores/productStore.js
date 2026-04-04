@@ -13,7 +13,7 @@ export const useProductStore = defineStore('products', {
   actions: {
     async fetchCategories() {
       try {
-        const res = await axios.get(`${API_URL}/api/products/categories`)
+        const res = await axios.get('/api/products/categories')
         this.categories = res.data
       } catch (err) {
         this.error = 'Failed to fetch categories'
@@ -27,7 +27,7 @@ export const useProductStore = defineStore('products', {
         if (window.location.pathname.startsWith('/admin')) {
           query.admin = true
         }
-        const res = await axios.get(`${API_URL}/api/products/`, { params: query })
+        const res = await axios.get('/api/products/', { params: query })
         this.products = res.data
       } catch (err) {
         this.error = 'Failed to fetch products'
@@ -39,7 +39,7 @@ export const useProductStore = defineStore('products', {
     async fetchProductById(id) {
       this.loading = true
       try {
-        const res = await axios.get(`${API_URL}/api/products/${id}`)
+        const res = await axios.get(`/api/products/${id}`)
         return res.data
       } catch (err) {
         this.error = 'Failed to fetch product details'
@@ -51,7 +51,7 @@ export const useProductStore = defineStore('products', {
 
     async addProduct(productData) {
       try {
-        await axios.post(`${API_URL}/api/products/`, productData)
+        await axios.post('/api/products/', productData)
         await this.fetchProducts()
         return true
       } catch (err) {
@@ -62,7 +62,7 @@ export const useProductStore = defineStore('products', {
 
     async updateProduct(id, productData) {
       try {
-        await axios.put(`${API_URL}/api/products/${id}`, productData)
+        await axios.put(`/api/products/${id}`, productData)
         await this.fetchProducts()
         return true
       } catch (err) {
@@ -74,7 +74,7 @@ export const useProductStore = defineStore('products', {
     async deleteProduct(id) {
       if (!confirm('Are you sure you want to delete this product?')) return
       try {
-        await axios.delete(`${API_URL}/api/products/${id}`)
+        await axios.delete(`/api/products/${id}`)
         await this.fetchProducts()
       } catch (err) {
         this.error = 'Failed to delete product'
@@ -84,7 +84,7 @@ export const useProductStore = defineStore('products', {
     // --- Category Management ---
     async addCategory(categoryData) {
       try {
-        await axios.post(`${API_URL}/api/products/categories`, categoryData)
+        await axios.post('/api/products/categories', categoryData)
         await this.fetchCategories()
         return true
       } catch (err) {
@@ -95,7 +95,7 @@ export const useProductStore = defineStore('products', {
 
     async updateCategory(id, categoryData) {
       try {
-        await axios.put(`${API_URL}/api/products/categories/${id}`, categoryData)
+        await axios.put(`/api/products/categories/${id}`, categoryData)
         await this.fetchCategories()
         return true
       } catch (err) {
@@ -107,7 +107,7 @@ export const useProductStore = defineStore('products', {
     async deleteCategory(id) {
       if (!confirm('Are you sure you want to delete this category?')) return
       try {
-        await axios.delete(`${API_URL}/api/products/categories/${id}`)
+        await axios.delete(`/api/products/categories/${id}`)
         await this.fetchCategories()
         return true
       } catch (err) {

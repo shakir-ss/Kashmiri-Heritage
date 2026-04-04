@@ -4,4 +4,4 @@ export const LOCAL_PINCODES = [
   '191101', '191111', '191121' // Example additional local areas
 ]
 
-export const API_URL = import.meta.env.VITE_API_URL || '' // Empty means relative (proxy)
+export const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') // Strip trailing slash
