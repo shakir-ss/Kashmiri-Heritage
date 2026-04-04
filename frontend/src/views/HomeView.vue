@@ -252,6 +252,22 @@ const addToCart = (product) => {
   max-width: 800px;
 }
 
+@media (max-width: 768px) {
+  .hero {
+    height: 80vh;
+    text-align: center;
+    justify-content: center;
+    padding: 0 1rem;
+  }
+  .hero-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.8));
+    background-position: 75% center; /* Shift image to show more of the subject on mobile */
+  }
+  .hero-content {
+    max-width: 100%;
+  }
+}
+
 .hero-badge {
   display: inline-block;
   background: var(--secondary);
@@ -268,18 +284,22 @@ const addToCart = (product) => {
   font-size: 4.5rem;
   line-height: 1.1;
   margin-bottom: 1.5rem;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 @media (max-width: 768px) {
   .hero h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem; /* Further reduced for very small screens */
+    margin-bottom: 1rem;
   }
   .hero p {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
   .hero-actions {
     flex-direction: column;
     width: 100%;
+    gap: 1rem;
   }
   .btn-block {
     width: 100%;
