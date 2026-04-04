@@ -18,11 +18,14 @@
         <router-link @click="closeMenu" to="/" class="logo">The Hundred <span>Villages</span></router-link>
         
         <!-- Hamburger Menu Toggle -->
-        <button class="mobile-menu-toggle" @click="isMenuOpen = !isMenuOpen" :class="{ 'active': isMenuOpen }">
+        <button class="mobile-menu-toggle" @click="isMenuOpen = !isMenuOpen" :class="{ 'active': isMenuOpen }" aria-label="Toggle Menu">
           <span class="bar"></span>
           <span class="bar"></span>
           <span class="bar"></span>
         </button>
+
+        <!-- Mobile Overlay -->
+        <div class="nav-overlay" :class="{ 'active': isMenuOpen }" @click="closeMenu"></div>
 
         <div class="nav-links" :class="{ 'mobile-active': isMenuOpen }">
           <router-link @click="closeMenu" to="/products">Products</router-link>
@@ -301,6 +304,46 @@ const handleLogout = () => {
   display: none;
 }
 
+/* Mobile Menu Styles */
+.nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s ease;
+}
+
+.nav-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1001;
+  padding: 10px;
+  margin-right: -10px;
+}
+
+.mobile-menu-toggle .bar {
+  width: 25px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
 @media (max-width: 768px) {
   .mobile-menu-toggle {
     display: flex;
@@ -314,21 +357,25 @@ const handleLogout = () => {
   .nav-links {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: 0;
     width: 80%;
+    max-width: 300px;
     height: 100vh;
     background: white;
     flex-direction: column;
     align-items: flex-start;
     padding: 6rem 2rem;
     gap: 2rem;
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -10px 0 30px rgba(0,0,0,0.1);
     z-index: 1000;
   }
 
   .nav-links.mobile-active {
-    right: 0;
+    transform: translateX(0);
+    visibility: visible;
   }
 
   .nav-actions {
