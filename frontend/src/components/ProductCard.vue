@@ -19,11 +19,19 @@
         {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
       </div>
       <button 
+        v-if="!isInCart"
         @click.stop="$emit('add-to-cart', product)" 
         class="btn btn-primary btn-sm"
         :disabled="product.stock <= 0"
       >
         {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+      </button>
+      <button 
+        v-else
+        @click.stop="goToCart" 
+        class="btn btn-secondary btn-sm"
+      >
+        Go to Cart →
       </button>
     </div>
   </div>
@@ -32,6 +40,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useWishlistStore } from '../stores/wishlistStore'
+import { useCartStore } from '../stores/cartStore'
 import { computed } from 'vue'
 
 const props = defineProps(['product'])
@@ -39,11 +48,17 @@ defineEmits(['add-to-cart'])
 
 const router = useRouter()
 const wishlistStore = useWishlistStore()
+const cartStore = useCartStore()
 
 const isInWishlist = computed(() => wishlistStore.isInWishlist(props.product.id))
+const isInCart = computed(() => cartStore.isInCart(props.product.id))
 
 const goToDetail = () => {
   router.push({ name: 'product-detail', params: { id: props.product.id } })
+}
+
+const goToCart = () => {
+  router.push({ name: 'cart' })
 }
 
 const toggleWishlist = () => {

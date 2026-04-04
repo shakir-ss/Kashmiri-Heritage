@@ -76,8 +76,22 @@
             <button @click="quantity < product.stock ? quantity++ : null">+</button>
           </div>
           
-          <button @click="addToCart" class="btn btn-primary btn-lg" :disabled="product.stock <= 0">Add to Cart</button>
-          <button @click="buyNow" class="btn btn-secondary btn-lg" :disabled="product.stock <= 0">Buy It Now</button>
+          <button 
+            v-if="!isInCart"
+            @click="addToCart" 
+            class="btn btn-primary btn-lg" 
+            :disabled="product.stock <= 0"
+          >
+            Add to Cart
+          </button>
+          <button 
+            v-else
+            @click="router.push('/cart')" 
+            class="btn btn-secondary btn-lg"
+          >
+            Go to Cart →
+          </button>
+          <button @click="buyNow" class="btn btn-outline btn-lg" :disabled="product.stock <= 0">Buy It Now</button>
         </div>
 
         <div class="trust-badges">
@@ -152,6 +166,9 @@ onMounted(async () => {
   loading.value = false
   wishlistStore.fetchWishlist()
 })
+
+const isInWishlist = computed(() => wishlistStore.isInWishlist(product.value?.id))
+const isInCart = computed(() => product.value ? cartStore.isInCart(product.value.id) : false)
 
 const displayPrice = computed(() => {
   if (!product.value) return 0
