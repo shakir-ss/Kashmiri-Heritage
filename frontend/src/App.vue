@@ -15,25 +15,37 @@
     <!-- Navbar -->
     <nav class="navbar" :class="{ 'nav-scrolled': scrolly > 50 }">
       <div class="container nav-content">
-        <router-link to="/" class="logo">The Hundred <span>Villages</span></router-link>
+        <router-link @click="closeMenu" to="/" class="logo">The Hundred <span>Villages</span></router-link>
         
-        <div class="nav-links">
-          <router-link to="/products">Products</router-link>
+        <!-- Hamburger Menu Toggle -->
+        <button class="mobile-menu-toggle" @click="isMenuOpen = !isMenuOpen" :class="{ 'active': isMenuOpen }" aria-label="Toggle Menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <!-- Mobile Overlay -->
+        <div class="nav-overlay" :class="{ 'active': isMenuOpen }" @click="closeMenu"></div>
+
+        <div class="nav-links" :class="{ 'mobile-active': isMenuOpen }">
+          <router-link @click="closeMenu" to="/products">Products</router-link>
           
           <div class="nav-actions">
-            <router-link to="/wishlist" class="nav-icon-link" title="Wishlist">
+            <router-link @click="closeMenu" to="/wishlist" class="nav-icon-link" title="Wishlist">
               <span class="icon">🤍</span>
+              <span class="mobile-only-text">Wishlist</span>
             </router-link>
-            <router-link to="/cart" class="cart-link">
+            <router-link @click="closeMenu" to="/cart" class="cart-link">
               <span class="cart-icon">🛒</span>
               <span v-if="cartStore.cartCount > 0" class="cart-badge">{{ cartStore.cartCount }}</span>
+              <span class="mobile-only-text">Cart</span>
             </router-link>
 
             <template v-if="!auth.isAuthenticated">
-              <router-link to="/login" class="btn btn-outline btn-nav">Login</router-link>
+              <router-link @click="closeMenu" to="/login" class="btn btn-outline btn-nav">Login</router-link>
             </template>
             <template v-else>
-              <router-link to="/admin" v-if="auth.isAdmin" class="admin-tag">Admin</router-link>
+              <router-link @click="closeMenu" to="/admin" v-if="auth.isAdmin" class="admin-tag">Admin</router-link>
               <button @click="handleLogout" class="btn-text">Logout</button>
             </template>
           </div>
@@ -83,6 +95,11 @@ const auth = useAuthStore()
 const cartStore = useCartStore()
 const router = useRouter()
 const scrolly = ref(0)
+const isMenuOpen = ref(false)
+
+const closeMenu = () => {
+  isMenuOpen.value = false
+}
 
 // Conditional Analytics for Local Dev
 const analyticsEnabled = import.meta.env.VITE_VERCEL_ANALYTICS === 'true'
@@ -262,6 +279,134 @@ const handleLogout = () => {
   color: var(--text-dark);
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Mobile Menu Styles */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.mobile-menu-toggle .bar {
+  width: 25px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.mobile-only-text {
+  display: none;
+}
+
+/* Mobile Menu Styles */
+.nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s ease;
+}
+
+.nav-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1001;
+  padding: 10px;
+  margin-right: -10px;
+}
+
+.mobile-menu-toggle .bar {
+  width: 25px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Hamburger Animation */
+  .mobile-menu-toggle.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .mobile-menu-toggle.active .bar:nth-child(2) { opacity: 0; }
+  .mobile-menu-toggle.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    background: white;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6rem 2rem;
+    gap: 2rem;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+
+  .nav-links.mobile-active {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .nav-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 2rem;
+  }
+
+  .nav-icon-link, .cart-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-decoration: none;
+  }
+
+  .mobile-only-text {
+    display: inline;
+    font-size: 1rem;
+  }
+
+  .cart-badge {
+    position: static;
+    margin-left: 0.5rem;
+  }
+
+  .btn-nav {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
