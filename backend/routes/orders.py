@@ -1,5 +1,6 @@
 import threading
 import razorpay
+import time
 from flask import Blueprint, request, jsonify, current_app
 from models import db, Order, OrderItem, CartItem, Product, User
 from .auth import token_required, admin_required
@@ -48,17 +49,23 @@ def place_order(current_user):
         amount_to_pay = total_amount * 0.30
 
     # 1. Create Razorpay Order (The "Handshake" starts here)
-    try:
-        client = get_razorpay_client()
-        razorpay_order = client.order.create({
-            "amount": int(amount_to_pay * 100), # Amount in paise (100 paise = 1 INR)
-            "currency": "INR",
-            "payment_capture": "1" # Auto-capture
-        })
-        razorpay_order_id = razorpay_order['id']
-    except Exception as e:
-        print(f"RAZORPAY ERROR: {e}")
-        return jsonify({'message': 'Payment gateway unavailable'}), 503
+    razorpay_order_id = "mock_order_" + str(int(time.time()))
+    if payment_mode == 'mock':
+        if not current_app.config.get('ENABLE_MOCK_PAYMENT'):
+            return jsonify({'message': 'Mock payment is not enabled in this environment'}), 403
+        print("DEBUG: Bypassing Razorpay Order creation for Mock Payment.")
+    else:
+        try:
+            client = get_razorpay_client()
+            razorpay_order = client.order.create({
+                "amount": int(amount_to_pay * 100), # Amount in paise (100 paise = 1 INR)
+                "currency": "INR",
+                "payment_capture": "1" # Auto-capture
+            })
+            razorpay_order_id = razorpay_order['id']
+        except Exception as e:
+            print(f"RAZORPAY ERROR: {e}")
+            return jsonify({'message': 'Payment gateway unavailable'}), 503
 
     # Create local Order record (Status: pending)
     new_order = Order(
@@ -103,7 +110,32 @@ def place_order(current_user):
 @token_required
 def verify_payment(current_user):
     data = request.get_json()
-    # verify_payment_signature checks the authenticity of the payment
+    
+    # QA Mock Bypass
+    is_mock = False
+    if data.get('razorpay_signature') == 'mock_signature':
+        if current_app.config.get('ENABLE_MOCK_PAYMENT') and current_app.config.get('ENV') != 'production':
+            is_mock = True
+        else:
+            return jsonify({'message': 'Mock signature detected but mock payments are disabled or in production'}), 403
+
+    if is_mock:
+        try:
+            order_id = int(data.get('order_id'))
+            order = Order.query.get(order_id)
+            if order and order.user_id == current_user.id:
+                order.status = 'paid' if order.balance_on_delivery == 0 else 'partial_paid'
+                order.payment_id = data.get('razorpay_payment_id') or "mock_id"
+                CartItem.query.filter_by(user_id=current_user.id).delete()
+                db.session.commit()
+                return jsonify({'message': 'Mock Verified', 'order_id': order.id}), 200
+            
+            error_msg = f"Mock Check Failed: OrderFound={order is not None}"
+            if order: error_msg += f", OrderUID={order.user_id}, CurrentUID={current_user.id}"
+            return jsonify({'message': error_msg}), 400
+        except Exception as e:
+            return jsonify({'message': f"Mock Exception: {str(e)}"}), 400
+
     try:
         client = get_razorpay_client()
         client.utility.verify_payment_signature({
@@ -112,35 +144,38 @@ def verify_payment(current_user):
             'razorpay_signature': data.get('razorpay_signature')
         })
         
-        # Success! Update order and deduct stock
-        order = Order.query.get(data.get('order_id'))
-        if order and order.user_id == current_user.id:
-            order.status = 'paid' if order.balance_on_delivery == 0 else 'partial_paid'
-            order.payment_id = data.get('razorpay_payment_id') # Update with final Payment ID
+        order_id = data.get('order_id')
+        order = Order.query.get(order_id)
+        
+        if not order:
+            return jsonify({'message': 'Order not found'}), 404
             
-            # Deduct stock for real now
-            for item in order.items:
-                item.product.stock -= item.quantity
-            
-            # Clear Cart
-            CartItem.query.filter_by(user_id=current_user.id).delete()
-            db.session.commit()
+        if order.user_id != current_user.id:
+            return jsonify({'message': 'Unauthorized'}), 403
 
-            # Trigger WhatsApp Notification (Async)
-            def notify():
-                try:
-                    with current_app.app_context():
-                        MessagingService.send_order_confirmation(order.phone, order.id, order.total_amount)
-                except: pass
-            threading.Thread(target=notify).start()
+        order.status = 'paid' if order.balance_on_delivery == 0 else 'partial_paid'
+        order.payment_id = data.get('razorpay_payment_id')
 
-            return jsonify({'message': 'Transaction secured and verified', 'order_id': order.id}), 200
-            
+        # Deduct stock
+        for item in order.items:
+            item.product.stock -= item.quantity
+
+        # Clear Cart
+        CartItem.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        
+        # WhatsApp (only for real payments)
+        def notify():
+            try:
+                with current_app.app_context():
+                    MessagingService.send_order_confirmation(order.phone, order.id, order.total_amount)
+            except: pass
+        threading.Thread(target=notify).start()
+
+        return jsonify({'message': 'Verified', 'order_id': order.id}), 200
+
     except Exception as e:
-        print(f"SIGNATURE VERIFICATION FAILED: {e}")
-        return jsonify({'message': 'Handshake verification failed'}), 400
-
-    return jsonify({'message': 'Invalid transaction'}), 400
+        return jsonify({'message': f'Error: {str(e)}'}), 400
 
 @orders_bp.route('/', methods=['GET'])
 @token_required

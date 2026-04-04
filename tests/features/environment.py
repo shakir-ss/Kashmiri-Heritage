@@ -1,10 +1,13 @@
 from playwright.sync_api import sync_playwright
 import requests
 
+import os
+
 def before_all(context):
     # Setup Playwright for UI tests
     context.playwright = sync_playwright().start()
-    context.browser = context.playwright.chromium.launch(headless=True)
+    is_headless = os.environ.get('HEADLESS', 'true').lower() == 'true'
+    context.browser = context.playwright.chromium.launch(headless=is_headless)
     
     # Base URLs
     context.base_api_url = "http://localhost:5000/api"

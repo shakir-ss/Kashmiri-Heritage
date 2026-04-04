@@ -64,12 +64,15 @@ class Config:
     RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
     RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'placeholder_secret')
     STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+    ENABLE_MOCK_PAYMENT = os.environ.get('ENABLE_MOCK_PAYMENT', 'false').lower() == 'true'
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    ENV = 'development'
 
 class ProductionConfig(Config):
     DEBUG = False
+    ENV = 'production'
 
 config_by_name = {
     'dev': DevelopmentConfig,
