@@ -420,10 +420,6 @@ const openUploadWidget = (targetIndex = null) => {
       showSkipCropButton: false,
       croppingAspectRatio: targetIndex === null ? 0.75 : 1, // 3:4 for main, 1:1 for additional
       clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
-      // Compression & Optimization
-      maxImageWidth: 1200,
-      maxImageHeight: 1600,
-      validateMaxWidthHeight: true,
       styles: {
         palette: {
           window: "#FFFFFF",
