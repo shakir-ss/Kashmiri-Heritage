@@ -14,9 +14,9 @@
           </div>
         </template>
         <template v-else>
-          <div class="hero-badge">Direct from the Valley</div>
-          <h1>Authentic Kashmiri <span>Heritage</span> & Artisanal Treasures</h1>
-          <p>Exquisite Pashminas, Premium Organic Dry Fruits, and Handcrafted Papier Mâché—sourced directly from the 100 villages of Kashmir.</p>
+          <div class="hero-badge">Authentic & Sourced with Care</div>
+          <h1>Kashmiri Heritage: <span>Pure Dry Fruits</span> & Local Handicrafts</h1>
+          <p>Exquisite Pashminas, Premium Organic Dry Fruits, and Handcrafted Treasures—sourced directly from the heart of the Kashmir Valley.</p>
           <div class="hero-actions">
             <router-link to="/products" class="btn btn-secondary">Explore the Catalog</router-link>
             <router-link to="/about" class="btn btn-outline-white">Our Village Story</router-link>
@@ -239,8 +239,10 @@ const addToCart = (product) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
-  background-image: url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
+  /* Combine Gradient and Image to ensure both are rendered correctly */
+  background-image: 
+    linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.2) 100%),
+    url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
   background-size: cover;
   background-position: center;
   transition: background-image 0.5s ease-in-out;
@@ -250,21 +252,25 @@ const addToCart = (product) => {
   position: relative;
   z-index: 1;
   max-width: 800px;
+  padding: 0 2rem; /* Add inner padding for stability on tablets */
 }
 
 @media (max-width: 768px) {
   .hero {
-    height: 80vh;
+    height: 85vh;
     text-align: center;
     justify-content: center;
-    padding: 0 1rem;
   }
   .hero-overlay {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.8));
-    background-position: 75% center; /* Shift image to show more of the subject on mobile */
+    /* Darker bottom gradient for mobile text contrast, shift image to keep Shikara visible */
+    background-image: 
+      linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.8) 100%),
+      url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
+    background-position: 35% center; /* Shift focus to the Shikara on mobile */
   }
   .hero-content {
     max-width: 100%;
+    padding: 0 1.5rem;
   }
 }
 
