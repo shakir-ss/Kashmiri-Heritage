@@ -300,8 +300,9 @@
             <label for="prod-image">Main Image URL</label>
             <div class="image-input-group">
               <input id="prod-image" v-model="form.image_url" placeholder="https://..." />
-              <button type="button" @click="openUploadWidget" class="btn btn-secondary btn-sm">Upload from Cloud</button>
+              <button type="button" @click="openUploadWidget(null)" class="btn btn-secondary btn-sm">Upload from Cloud</button>
             </div>
+            <small class="hint-text">Automatic compression and 'kashmiri_heritage' folder applied.</small>
             <div v-if="form.image_url" class="image-preview mt-2">
               <img :src="form.image_url" alt="Preview" style="max-height: 100px; border-radius: 8px;" />
             </div>
@@ -311,6 +312,7 @@
             <label>Additional Images (Optional)</label>
             <div v-for="(img, index) in form.additional_images" :key="index" class="image-input-row">
               <input v-model="form.additional_images[index]" placeholder="https://..." />
+              <button type="button" @click="openUploadWidget(index)" class="btn btn-outline btn-sm">Upload</button>
               <button type="button" @click="removeImageField(index)" class="btn-text delete">Remove</button>
             </div>
             <button type="button" @click="addImageField" class="btn-text">+ Add Another Image</button>
@@ -400,7 +402,7 @@ const viewInquiry = (inquiry) => {
   alert(`Inquiry from ${inquiry.name}\nSubject: ${inquiry.subject}\n\nMessage:\n${inquiry.message}\n\nContact:\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone || 'N/A'}`)
 }
 
-const openUploadWidget = () => {
+const openUploadWidget = (targetIndex = null) => {
   // Check if cloudinary is loaded
   if (!window.cloudinary) {
     alert("Cloudinary script not loaded yet. Please refresh the page.")
@@ -409,14 +411,19 @@ const openUploadWidget = () => {
 
   const widget = window.cloudinary.createUploadWidget(
     {
-      cloudName: 'dghwqmarz', // Replace with your Cloudinary Cloud Name
-      uploadPreset: 'hundred_villages_preset', // Replace with your Unsigned Upload Preset
+      cloudName: 'dghwqmarz', // Your Cloudinary Cloud Name
+      uploadPreset: 'hundred_villages_preset', // Your Unsigned Upload Preset
+      folder: 'kashmiri_heritage', // Organizes images in a separate folder
       sources: ['local', 'url', 'camera'],
       multiple: false,
       cropping: true,
       showSkipCropButton: false,
-      croppingAspectRatio: 0.75, // 3:4 Portrait for premium look
+      croppingAspectRatio: targetIndex === null ? 0.75 : 1, // 3:4 for main, 1:1 for additional
       clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
+      // Compression & Optimization
+      maxImageWidth: 1200,
+      maxImageHeight: 1600,
+      validateMaxWidthHeight: true,
       styles: {
         palette: {
           window: "#FFFFFF",
@@ -437,8 +444,12 @@ const openUploadWidget = () => {
     },
     (error, result) => {
       if (!error && result && result.event === "success") {
-        console.log("Done! Here is the image info: ", result.info)
-        form.value.image_url = result.info.secure_url
+        const optimizedUrl = result.info.secure_url.replace('/upload/', '/upload/q_auto,f_auto/');
+        if (targetIndex === null) {
+          form.value.image_url = optimizedUrl
+        } else {
+          form.value.additional_images[targetIndex] = optimizedUrl
+        }
       }
     }
   )
