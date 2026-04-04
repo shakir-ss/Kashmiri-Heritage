@@ -117,6 +117,9 @@
 .stat .label { font-size: 0.9rem; text-transform: uppercase; color: #888; letter-spacing: 1px; }
 
 @media (max-width: 768px) {
+  .about-hero { height: 40vh; }
+  .about-hero h1 { font-size: 2.5rem; }
+  .about-hero p { font-size: 1.1rem; }
   .story-grid { grid-template-columns: 1fr; gap: 3rem; }
   .values-grid { grid-template-columns: 1fr; }
   .impact-stats { flex-direction: column; gap: 3rem; }

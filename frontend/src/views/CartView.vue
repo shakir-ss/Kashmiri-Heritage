@@ -208,4 +208,38 @@ const proceedToCheckout = () => {
   width: 100%;
   margin-top: 2rem;
 }
+@media (max-width: 768px) {
+  .cart-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .cart-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .cart-item img {
+    margin-right: 0;
+    width: 120px;
+    height: 120px;
+  }
+
+  .quantity-controls {
+    margin-right: 0;
+    justify-content: center;
+  }
+
+  .item-total {
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 1rem;
+  }
+
+  .summary {
+    margin-top: 2rem;
+  }
+}
 </style>

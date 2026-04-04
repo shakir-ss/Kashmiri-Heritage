@@ -172,10 +172,39 @@ const addToCart = (product) => {
 @media (max-width: 768px) {
   .products-view {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
   }
   
   .filters {
-    display: none; /* Hide filters on mobile for prototype, or convert to dropdown */
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+  }
+
+  .filters h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-list {
+    flex-direction: row;
+    gap: 0.75rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .filter-list button {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    background: #f0f0f0;
+  }
+  
+  .search-bar {
+    margin-bottom: 1.5rem;
   }
 }
 </style>
