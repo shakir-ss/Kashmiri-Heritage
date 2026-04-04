@@ -767,8 +767,9 @@ const closeModal = () => {
   background: white;
   border-radius: 12px;
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow-x: auto;
   margin-bottom: 2rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
@@ -845,5 +846,38 @@ const closeModal = () => {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 2rem;
+}
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .header-actions .btn {
+    flex: 1;
+    font-size: 0.7rem;
+    padding: 0.6rem;
+  }
+
+  .insights-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
 }
 </style>

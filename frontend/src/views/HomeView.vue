@@ -270,6 +270,22 @@ const addToCart = (product) => {
   margin-bottom: 1.5rem;
 }
 
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  .hero p {
+    font-size: 1rem;
+  }
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-block {
+    width: 100%;
+  }
+}
+
 .hero h1 span {
   color: var(--secondary);
 }
