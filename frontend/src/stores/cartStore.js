@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
+import { API_URL } from '../config'
 
 export const useCartStore = defineStore('cart', {
   state: () => ({

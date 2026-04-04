@@ -78,8 +78,17 @@ def step_impl(context):
 
 @then('the cart should be cleared')
 def step_impl(context):
+    # Use a small retry loop as DB commit might have slight delay
+    import time
+    for _ in range(5):
+        response = context.api_session.get(f"{context.base_api_url}/cart/")
+        if len(response.json()) == 0:
+            return
+        time.sleep(0.5)
+    
+    # Final check
     response = context.api_session.get(f"{context.base_api_url}/cart/")
-    assert len(response.json()) == 0
+    assert len(response.json()) == 0, f"Cart not cleared: {response.json()}"
 
 # --- UI STEPS ---
 

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
+import { API_URL } from '../config'
 
 export const useWishlistStore = defineStore('wishlist', {
   state: () => ({
@@ -31,11 +32,12 @@ export const useWishlistStore = defineStore('wishlist', {
         return
       }
 
-      const index = this.items.findIndex(item => item.product_id === product.id)
+      const index = this.items.findIndex(item => item.product_id === (product.id || product.product_id))
       if (index > -1) {
         // Remove
         try {
-          await axios.delete(`/api/wishlist/remove/${product.id}`)
+          const pid = product.id || product.product_id
+          await axios.delete(`/api/wishlist/remove/${pid}`)
           this.items.splice(index, 1)
         } catch (err) {
           console.error('Failed to remove from wishlist:', err)
@@ -58,7 +60,7 @@ export const useWishlistStore = defineStore('wishlist', {
     },
 
     isInWishlist(productId) {
-      return this.items.some(item => item.product_id === productId)
+      return this.items.some(item => (item.product_id === productId || item.id === productId))
     }
   }
 })

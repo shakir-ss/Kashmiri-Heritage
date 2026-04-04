@@ -9,6 +9,8 @@ app = create_app('dev')
 
 def create_admin_user():
     with app.app_context():
+        print("Ensuring tables exist...")
+        db.create_all()
         print("Registering root admin user...")
         # Check if user already exists
         email = "root@thehundredvillages.com"

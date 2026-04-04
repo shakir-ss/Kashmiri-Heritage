@@ -14,8 +14,8 @@ def step_impl(context):
     assert isinstance(orders, list)
     if len(orders) > 0:
         # Check for admin-specific fields
-        assert 'customer_name' in orders[0]
-        assert 'customer_email' in orders[0]
+        assert 'user' in orders[0]
+        assert 'user_email' in orders[0]
 
 # --- UI STEPS ---
 
