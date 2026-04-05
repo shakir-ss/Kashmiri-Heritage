@@ -36,7 +36,7 @@ def seed():
         )
         cat_dry_fruits = Category(
             name="Premium Dry Fruits", 
-            slug="dry-fruits", 
+            slug="dry-fruits_premium", 
             description="Sun-dried treasures from ancient Kashmiri orchards, known globally for their superior oil content and nutritional density."
         )
 
