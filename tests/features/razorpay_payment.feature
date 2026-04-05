@@ -6,7 +6,7 @@ Feature: Payment Integration & Checkout Robustness
   @ui @regression @smoke @mock
   Scenario: Rapid End-to-End Checkout using QA Mock Bypass
     Given I am logged in as admin on the UI
-    And I am on the Home page
+    And I am on the Products page
     When I add "Wild Himalayan White Honey" to the cart
     And I go to the Cart page
     And I click the button "Proceed to Checkout"

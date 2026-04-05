@@ -67,7 +67,7 @@ def step_impl(context, address, phone):
         "state": "Jammu & Kashmir",
         "country": "India",
         "pincode": "190001",
-        "payment_mode": "upi"
+        "payment_mode": "mock" # Use mock for API tests to bypass RZP
     }
     context.response = context.api_session.post(f"{context.base_api_url}/orders/place", json=payload)
 
@@ -95,7 +95,18 @@ def step_impl(context):
 
 @given('I am on the Home page')
 def step_impl(context):
-    # Actually go to the products catalog where all products are visible
+    # Actually go to the root Home page
+    context.page.goto(f"{context.base_ui_url}/")
+    # Clear local storage cart to ensure isolation
+    context.page.evaluate("window.localStorage.removeItem('cart_items')")
+    # Wait for the hero section to be visible to confirm we are on the Home page
+    context.page.wait_for_selector('.hero', state='visible', timeout=15000)
+    context.page.wait_for_timeout(2000)
+
+@given('I am on the Products page')
+@when('I am on the Products page')
+def step_impl(context):
+    # Navigate specifically to the products catalog
     context.page.goto(f"{context.base_ui_url}/products")
     # Clear local storage cart to ensure isolation
     context.page.evaluate("window.localStorage.removeItem('cart_items')")

@@ -63,6 +63,7 @@ Feature: Product Management
         Then I should see the product "Kashmiri Kahwa Set" in the product list
         When I am on the Products page
         And I click on product "Kashmiri Kahwa Set"
+
         Then I should see the product detail page for "Kashmiri Kahwa Set"
         And I should see 3 images in the gallery
 

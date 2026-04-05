@@ -25,6 +25,7 @@ Feature: Inventory and Stock Management
         Then I should see the product "Multi-Pack Saffron" in the product list
         When I am on the Products page
         And I click on product "Multi-Pack Saffron"
+
         Then I should see the variant chip "1 gram"
         And I should see the variant chip "5 grams"
         When I click variant chip "5 grams"
