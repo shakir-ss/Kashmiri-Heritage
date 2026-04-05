@@ -33,7 +33,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "setuptools<82"
           python -m pip install -r backend/requirements.txt
-          python -m pip install behave playwright pytest
+          python -m pip install behave playwright pytest requests
 
       - name: Install Playwright Browsers
         run: playwright install --with-deps chromium
@@ -68,13 +68,15 @@ jobs:
           cd backend
           python app.py &
           cd ../frontend
-          npm run dev -- --port 3000 &
-          sleep 15 # Wait for both to be ready
+          # Use CI=true to prevent Vite from interactive prompts
+          CI=true npm run dev -- --port 3000 &
+          sleep 20 # Give services extra time to warm up in CI
 
-      - name: Run Rapid BDD Regression (@smoke)
+      - name: Run Full BDD Regression Suite
         env:
           HEADLESS: "true"
           BASE_URL: http://localhost:3000
+          ENABLE_MOCK_PAYMENT: "true"
         run: |
-          # Use local behave installed via pip
-          behave tests/features/razorpay_payment.feature --tags=@smoke
+          # Run all tests except those requiring real provider interaction
+          behave tests/features --tags=~@provider-verify
