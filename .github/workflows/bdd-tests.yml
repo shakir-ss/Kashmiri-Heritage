@@ -55,7 +55,7 @@ jobs:
           python backend/scripts/init_db.py
           python backend/scripts/update_db_schema.py
           python backend/scripts/register_root.py
-          python backend/scripts/seed_themed_data.py
+          python backend/scripts/seed_themed_data_legacy.py
 
       - name: Start Services (Backend & Frontend)
         env:
