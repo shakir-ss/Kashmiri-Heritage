@@ -58,4 +58,5 @@ config_name = os.environ.get('FLASK_CONFIG', 'prod')
 app = create_app(config_name)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, use_reloader=False)
+    # Enable reloader for local development
+    app.run(host='0.0.0.0', port=5000, use_reloader=True)

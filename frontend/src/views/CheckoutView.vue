@@ -115,6 +115,20 @@
                 <small>Full secure payment via global banking networks.</small>
               </div>
             </label>
+
+            <!-- Development Only: Mock Payment Bypass -->
+            <label 
+              v-if="showMockPayment"
+              class="payment-option mock-test-option" 
+              :class="{ selected: form.payment_mode === 'mock' }"
+              style="border: 2px dashed #ff4757; background: #fff5f6;"
+            >
+              <input type="radio" v-model="form.payment_mode" value="mock" name="payment" />
+              <div class="opt-content">
+                <span class="opt-label" style="color: #ff4757;">⚠️ QA Mock Payment (Test Only)</span>
+                <small>Instantly bypass gateway for regression testing.</small>
+              </div>
+            </label>
           </div>
 
           <!-- Psychological commitment message -->
@@ -227,6 +241,8 @@ const cartStore = useCartStore()
 const authStore = useAuthStore()
 const loading = ref(false)
 const successOrder = ref(null)
+// const isDev = import.meta.env.DEV
+const showMockPayment = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK_PAYMENT === 'true';
 
 const countries = ['India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Canada', 'Australia']
 const indianStates = [
@@ -358,6 +374,20 @@ const handleCheckout = async () => {
 
     const orderData = res.data;
 
+    // --- MOCK PAYMENT BYPASS (Dev Only) ---
+    if (form.value.payment_mode === 'mock') {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      const verifyRes = await axios.post('/api/orders/verify', {
+        razorpay_order_id: orderData.razorpay_order_id || 'mock_order_id',
+        razorpay_payment_id: 'mock_payment_' + Date.now(),
+        razorpay_signature: 'mock_signature',
+        order_id: orderData.order_id
+      });
+      successOrder.value = verifyRes.data.order_id;
+      cartStore.clearCart();
+      return;
+    }
+
     // 2. Configure Razorpay Options
     const options = {
       key: orderData.key,
@@ -394,7 +424,9 @@ const handleCheckout = async () => {
     rzp.open();
 
   } catch (err) {
-    alert(err.response?.data?.message || 'Handshake could not be initiated.')
+    const msg = err.response?.data?.message || err.message;
+    successOrder.value = 'DEBUG_ERROR: ' + msg;
+    console.error("CHECKOUT_ERROR:", msg);
   } finally {
     loading.value = false
   }

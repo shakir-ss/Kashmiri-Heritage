@@ -104,12 +104,6 @@ def step_impl(context, name, price, stock, details):
     )
     assert context.response.status_code == 201, f"Expected 201 but got {context.response.status_code}: {context.response.text}"
 
-@given('I am on the Products page')
-@when('I am on the Products page')
-def step_impl(context):
-    context.page.goto(f"{context.base_ui_url}/products")
-    context.page.wait_for_selector('.products-grid, .product-card, h1:has-text("Our Products")')
-
 @then('I should see product "{name}"')
 def step_impl(context, name):
     # Use context.last_product_name if name matches placeholder
@@ -124,9 +118,12 @@ def step_impl(context, name, status, alt_status):
 
 @when('I click on the "{name}" category card')
 def step_impl(context, name):
-    # Find the category card by name and click the 'View All' link inside it
+    # Find the category card by name in the Curated Treasures section
+    # Use the specific link text "View All Collection →"
     card = context.page.locator('.category-card', has_text=name).first
-    card.locator('.btn-link').click()
+    card.scroll_into_view_if_needed()
+    btn = card.locator('a.btn-link', has_text="View All Collection →")
+    btn.click()
 
 @then('the "{name}" category should be active in the sidebar')
 def step_impl(context, name):

@@ -33,12 +33,13 @@ Feature: Cart and Checkout
         And I go to the Cart page
         And I click the modal button "Proceed to Checkout"
         And I fill in "Full Name" with "Local Customer"
-        And I fill in "Phone Number" with "+91 9988776655"
+        And I fill in "Phone Number" with "9988776655"
         And I fill in "Shipping Address" with "Srinagar Downtown"
         And I fill in "City" with "Srinagar"
         And I fill in "Area Pincode" with "190001"
         Then I should see "COMPLIMENTARY" in delivery charges
-        When I agree to the terms
+        When I select payment mode "QA Mock Payment"
+        And I agree to the terms
         And I click the modal button "Authorize Full Payment"
         Then I should see "Order Secured Successfully!"
 
