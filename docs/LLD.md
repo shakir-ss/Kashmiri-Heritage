@@ -8,17 +8,17 @@ Products are modeled with a base price. Flexible options are handled via the `Pr
 *   `SKU`: Unique identifier for logistics and tracking.
 
 ### Orders & Payments
-To support Partial COD, the `Order` model includes:
+To support Partial COD and Razorpay integration, the `Order` model includes:
 *   `total_amount`: The grand total including shipping.
-*   `prepaid_amount`: Calculated as `total * 0.30` during checkout.
-*   `balance_on_delivery`: Calculated as `total * 0.70`.
-*   `status`: Initialized as `partial_paid` for COD orders.
+*   `prepaid_amount`: The amount paid upfront (Full for UPI/Card, 30% for COD).
+*   `balance_on_delivery`: The remaining 70% for COD orders.
+*   `status`: Initialized as `pending` during the handshake. Transitions to `paid` or `partial_paid` only after the `/verify` endpoint confirms the payment signature.
 
 ## 2. Key Algorithms & Logic
 ### Shipping Calculation
 Implemented in `backend/routes/orders.py` and mirrored in `CheckoutView.vue` for real-time UI updates:
 ```python
-LOCAL_PINCODES = [...] # List maintained in config.js/backend constants
+LOCAL_PINCODES = [...] # Pincodes maintained for Kashmiri heritage radius
 if pincode in LOCAL_PINCODES:
     shipping = 0.0
 else:
@@ -26,11 +26,11 @@ else:
 ```
 
 ### Stock Management
-The backend implements **Atomic Deductions**. During `place_order`, stock is checked and deducted within a database transaction to prevent overselling:
+Stock is handled via **Deferred Deduction**. During `place_order`, stock is verified but not deducted. Actual deduction occurs only during the `verify_payment` phase to ensure inventory is only reduced for successful transactions:
 ```python
-if product.stock < item.quantity:
-    return error
-product.stock -= item.quantity
+# During /api/orders/verify
+for item in order.items:
+    item.product.stock -= item.quantity
 ```
 
 ## 3. API Contract Patterns
