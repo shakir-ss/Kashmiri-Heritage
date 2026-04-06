@@ -44,7 +44,20 @@ def step_impl(context):
     hero = context.page.locator('.hero')
     expect(hero).to_be_visible()
     
-    # Check if the computed background-image is set
-    bg_image = hero.evaluate('el => window.getComputedStyle(el).backgroundImage')
-    assert bg_image != 'none', "Hero section has no background image"
+    # Check if the computed background-image is set on the ::before pseudo-element
+    # Since the image is on ::before, we must specify it in getComputedStyle
+    bg_image = hero.evaluate("el => window.getComputedStyle(el, '::before').backgroundImage")
+    
+    # Also check if it's loaded (hero has 'loaded' class which sets opacity: 1 on ::before)
+    is_loaded = hero.evaluate("el => el.classList.contains('loaded')")
+    opacity = hero.evaluate("el => window.getComputedStyle(el, '::before').opacity")
+    
+    assert bg_image != 'none', "Hero section has no background image defined on ::before"
     assert 'url' in bg_image, f"Hero section background image seems invalid: {bg_image}"
+    
+    # Wait up to 5s for the 'loaded' class if it's not there yet (due to image preloading)
+    if not is_loaded or float(opacity) < 0.1:
+        context.page.wait_for_selector('.hero.loaded', timeout=10000)
+        opacity = hero.evaluate("el => window.getComputedStyle(el, '::before').opacity")
+        
+    assert float(opacity) > 0, "Hero section background is transparent (not loaded)"
