@@ -10,7 +10,12 @@
     <div v-else class="cart-layout">
       <!-- Cart Items -->
       <div class="cart-items">
-        <div v-for="item in cartStore.items" :key="item.product_id" class="cart-item">
+        <div 
+          v-for="item in cartStore.items" 
+          :key="item.product_id" 
+          class="cart-item"
+          :class="{ 'out-of-stock-item': item.stock <= 0 }"
+        >
           <router-link :to="'/products/' + item.product_id" class="item-link">
             <img :src="item.image_url || 'https://via.placeholder.com/80'" :alt="item.name" />
           </router-link>
@@ -19,14 +24,25 @@
               <h4>{{ item.name }}</h4>
             </router-link>
             <p class="price">₹{{ item.price }}</p>
-            <p class="stock-info" :class="{ 'low-stock': item.stock <= 5 }">
-              {{ item.stock > 0 ? `${item.stock} available` : 'Out of stock' }}
-            </p>
+            <div class="stock-status-msg">
+              <p v-if="item.stock > 0" class="stock-info" :class="{ 'low-stock': item.stock <= 5 }">
+                {{ item.stock }} available
+              </p>
+              <p v-else class="stock-info out-of-stock-text">
+                ⚠️ Currently Out of Stock
+              </p>
+            </div>
+            <div class="cart-item-actions">
+              <button @click="cartStore.moveToWishlist(item.product_id)" class="btn-text">Save to Wishlist</button>
+              <span class="divider">|</span>
+              <button @click="handleQuantityUpdate(item.product_id, 0)" class="btn-text remove">Remove</button>
+            </div>
           </div>
-          <div class="quantity-controls">
+          <div class="quantity-controls" :class="{ disabled: item.stock <= 0 }">
             <button 
               @click="handleQuantityUpdate(item.product_id, item.quantity - 1)" 
               class="btn-qty"
+              :disabled="item.stock <= 0"
               aria-label="Decrease quantity"
             >
               <span v-if="item.quantity > 1">-</span>
@@ -36,12 +52,13 @@
             <button 
               @click="handleQuantityUpdate(item.product_id, item.quantity + 1)" 
               class="btn-qty"
-              :disabled="item.quantity >= item.stock"
+              :disabled="item.quantity >= item.stock || item.stock <= 0"
               aria-label="Increase quantity"
             >+</button>
           </div>
           <div class="item-total">
-            ₹{{ item.price * item.quantity }}
+            <span v-if="item.stock > 0">₹{{ item.price * item.quantity }}</span>
+            <span v-else class="unavailable">Unavailable</span>
           </div>
         </div>
       </div>
@@ -191,6 +208,39 @@ const proceedToCheckout = () => {
   font-weight: 800;
 }
 
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #888;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+
+.btn-text:hover {
+  color: var(--secondary);
+}
+
+.btn-text.remove:hover {
+  color: #d00;
+}
+
+.divider {
+  color: #eee;
+  font-size: 0.8rem;
+}
+
 .quantity-controls {
   display: flex;
   align-items: center;
@@ -241,6 +291,30 @@ const proceedToCheckout = () => {
   width: 120px;
   text-align: right;
   color: var(--primary);
+}
+
+.item-total .unavailable {
+  color: #d00;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Out of Stock Handling */
+.out-of-stock-item {
+  opacity: 0.6;
+  background: #fdfdfd;
+  filter: grayscale(0.5);
+}
+
+.out-of-stock-text {
+  color: #d00 !important;
+  font-weight: 800;
+}
+
+.quantity-controls.disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .summary {

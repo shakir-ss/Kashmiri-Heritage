@@ -1,10 +1,20 @@
 <template>
   <div class="product-detail container" v-if="product">
-    <div class="breadcrumb">
-      <router-link to="/">Home</router-link> / 
-      <router-link to="/products">Products</router-link> / 
-      <span>{{ product.name }}</span>
-    </div>
+    <nav class="breadcrumb-nav">
+      <router-link to="/">Home</router-link>
+      <span class="sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <router-link to="/products">Heritage Catalog</router-link>
+      <span class="sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="current">{{ product.name }}</span>
+    </nav>
 
     <div class="detail-grid">
       <!-- Product Image Gallery -->
@@ -133,6 +143,31 @@
         </div>
       </div>
     </section>
+
+    <!-- Sticky Mobile Action Bar -->
+    <div class="sticky-mobile-bar" :class="{ visible: showStickyBar }">
+      <div class="sticky-bar-content container">
+        <div class="sticky-info">
+          <span class="sticky-name">{{ product.name }}</span>
+          <span class="sticky-price">₹{{ displayPrice }}</span>
+        </div>
+        <button 
+          v-if="!isInCart"
+          @click="addToCart" 
+          class="btn btn-primary btn-sm" 
+          :disabled="product.stock <= 0"
+        >
+          Add to Cart
+        </button>
+        <button 
+          v-else
+          @click="router.push('/cart')" 
+          class="btn btn-secondary btn-sm"
+        >
+          View Cart
+        </button>
+      </div>
+    </div>
   </div>
   <div v-else-if="loading" class="container loading-state">
     <p>Discovering Kashmiri treasures...</p>
@@ -140,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
@@ -157,6 +192,16 @@ const loading = ref(true)
 const quantity = ref(1)
 const activeImage = ref(null)
 const selectedVariant = ref(null)
+const showStickyBar = ref(false)
+
+const handleScroll = () => {
+  // Show sticky bar on mobile when scrolled past 600px
+  if (window.innerWidth < 992) {
+    showStickyBar.value = window.scrollY > 600
+  } else {
+    showStickyBar.value = false
+  }
+}
 
 onMounted(async () => {
   product.value = await productStore.fetchProductById(route.params.id)
@@ -165,6 +210,11 @@ onMounted(async () => {
   }
   loading.value = false
   wishlistStore.fetchWishlist()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 const isInWishlist = computed(() => wishlistStore.isInWishlist(product.value?.id))
@@ -606,5 +656,94 @@ const buyNow = () => {
   .main-image-container { height: 450px; }
   .action-buttons { flex-direction: column; }
   .quantity-selector { width: 100%; justify-content: center; }
+}
+
+/* Heritage Breadcrumbs */
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2rem;
+  color: #a0aec0;
+}
+
+.breadcrumb-nav a {
+  color: #718096;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb-nav a:hover {
+  color: var(--secondary);
+}
+
+.breadcrumb-nav .sep {
+  color: #cbd5e0;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-nav .current {
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sticky Mobile Bar */
+.sticky-mobile-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 0;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.05);
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-top: 1px solid #f0f0f0;
+}
+
+.sticky-mobile-bar.visible {
+  transform: translateY(0);
+}
+
+.sticky-bar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.sticky-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sticky-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.sticky-price {
+  font-weight: 800;
+  color: var(--secondary);
+  font-size: 1.1rem;
+}
+
+@media (min-width: 992px) {
+  .sticky-mobile-bar { display: none; }
 }
 </style>

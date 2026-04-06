@@ -80,6 +80,102 @@ h1, h2, h3, h4, .logo {
   100% { background-position: -200% 0; }
 }
 
+/* Heritage Breadcrumbs Utility */
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2rem;
+  color: #a0aec0;
+}
+
+.breadcrumb-nav a {
+  color: #718096;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb-nav a:hover {
+  color: var(--secondary);
+}
+
+.breadcrumb-nav .sep {
+  color: #cbd5e0;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-nav .current {
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Floating Artisan Support */
+.floating-support {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.support-bubble {
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-right: 4px solid var(--secondary);
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.floating-support:hover .support-bubble {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.btn-support {
+  width: 60px;
+  height: 60px;
+  background: #25d366;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+  transition: transform 0.3s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-support:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+@media (max-width: 768px) {
+  .floating-support {
+    bottom: 5rem; /* Avoid sticky mobile bar */
+    right: 1.5rem;
+  }
+  .support-bubble { display: none; }
+}
+
 /* SVG Divider Utility */
 .section-divider {
   width: 100%;

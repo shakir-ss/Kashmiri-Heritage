@@ -82,6 +82,14 @@
         <p>© 2026 The Hundred Villages. Artisanal Quality from the Heart of the Valley.</p>
       </div>
     </footer>
+
+    <!-- Floating Artisan Support -->
+    <div class="floating-support">
+      <div class="support-bubble">Talk to an Artisan</div>
+      <a href="https://wa.me/917889527508" target="_blank" class="btn-support" aria-label="WhatsApp Support">
+        <span>💬</span>
+      </a>
+    </div>
   </div>
 </template>
 

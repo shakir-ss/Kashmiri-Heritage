@@ -1,5 +1,15 @@
 <template>
   <div class="products-view container">
+    <nav class="breadcrumb-nav full-width">
+      <router-link to="/">Home</router-link>
+      <span class="sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="current">Heritage Catalog</span>
+    </nav>
+
     <!-- Sidebar Filters -->
     <aside class="filters">
       <h3>Categories</h3>
@@ -105,6 +115,11 @@ const addToCart = (product) => {
   grid-template-columns: 240px 1fr;
   gap: 3rem;
   padding-top: 3rem;
+}
+
+.breadcrumb-nav.full-width {
+  grid-column: 1 / -1;
+  margin-bottom: 1rem;
 }
 
 .filters h3 {
