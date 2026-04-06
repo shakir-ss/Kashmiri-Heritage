@@ -1,21 +1,48 @@
+import threading
+import time
+import urllib.request
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
-import os
 from config import config_by_name
 from models import db, bcrypt
+
+def keep_alive(url):
+    """Background task to self-ping the server every 14 minutes."""
+    if not url:
+        print("KEEP_ALIVE: No URL provided, skipping self-ping.")
+        return
+
+    print(f"KEEP_ALIVE: Starting self-ping thread for {url}")
+    while True:
+        try:
+            time.sleep(14 * 60) # 14 minutes
+            with urllib.request.urlopen(f"{url}/health") as response:
+                if response.getcode() == 200:
+                    print(f"KEEP_ALIVE: Ping successful at {time.ctime()}")
+                else:
+                    print(f"KEEP_ALIVE: Ping returned {response.getcode()} at {time.ctime()}")
+        except Exception as e:
+            print(f"KEEP_ALIVE ERROR: {e}")
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
 
-    
     db.init_app(app)
     bcrypt.init_app(app)
     Migrate(app, db)
     CORS(app)
 
+    # Start Keep-Alive Thread only in production
+    if app.config.get('ENV') == 'production':
+        render_url = os.environ.get('RENDER_EXTERNAL_URL')
+        if render_url:
+            threading.Thread(target=keep_alive, args=(render_url,), daemon=True).start()
+
     from routes.auth import auth_bp
+
     from routes.products import products_bp
     from routes.cart import cart_bp
     from routes.orders import orders_bp

@@ -90,6 +90,7 @@ import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useAuthStore } from './stores/authStore'
 import { useCartStore } from './stores/cartStore'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const auth = useAuthStore()
 const cartStore = useCartStore()
@@ -113,7 +114,13 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+
+  // Silent ping to wake up the Render backend (Free Tier)
+  axios.get('/health').catch(() => {
+    console.log("Waking up the artisanal servers...");
+  });
 })
+
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
