@@ -1,7 +1,7 @@
 <template>
   <div class="home-wrapper">
     <!-- Hero Section -->
-    <header class="hero" :class="{ 'hero-walnut': showWalnutBanner }">
+    <header class="hero" :class="{ 'hero-walnut': showWalnutBanner, 'loaded': heroLoaded }">
       <div class="hero-overlay"></div>
       <div class="container hero-content">
         <template v-if="showWalnutBanner">
@@ -204,8 +204,15 @@ const categories = [
   { id: 126, slug: 'papier-mache', name: 'Artistic Papier Mâché', image: b64_img('d4af37') }
 ]
 
+const heroLoaded = ref(false)
+
 onMounted(() => {
   productStore.fetchProducts()
+  
+  // Preload Hero for LCP optimization - Using relative path for Vite resolution
+  const img = new Image()
+  img.src = new URL('../assets/bg/shikara-snow-chinar-dal-lake-mountains.png', import.meta.url).href
+  img.onload = () => { heroLoaded.value = true }
 })
 
 const addToCart = (product) => {
@@ -216,43 +223,56 @@ const addToCart = (product) => {
 <style scoped>
 .hero {
   height: 90vh;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'%3E%3Crect width='1920' height='1080' fill='%234a2c2a'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='80' font-family='serif' text-anchor='middle'%3E%3C/text%3E%3C/svg%3E");
-  background-size: cover;
-  background-position: center;
+  /* Base color for early paint - acts as a placeholder */
+  background-color: #2a1b1a; 
   position: relative;
   display: flex;
   align-items: center;
   color: white;
-  margin-top: -80px; /* Offset for transparent navbar if needed */
-  transition: background-image 0.5s ease-in-out;
+  margin-top: -80px;
+  overflow: hidden; /* Ensure zoom/fade stays within bounds */
 }
 
 .hero-walnut {
-  /* background-image: url("https://www.canva.com/M/MAHECykVWjc/AZzzB21pfRSDZxl9GnQK8A-AZzzB21pywOtcsTb1wVr7g.jpg"); 
-  /* Using the @ alias which points to src */
   background-image: url("@/assets/wallnuts/walnut-banner.jpg");
+  background-size: cover;
+  background-position: center;
 }
 
 .hero-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* Combine Gradient and Image to ensure both are rendered correctly */
-  background-image: 
-    linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.2) 100%),
-    url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+  z-index: 2; /* Above the image pseudo-element */
+}
+
+/* Pseudo-element for the image to allow transition and color placeholder */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
   background-size: cover;
   background-position: center;
-  transition: background-image 0.5s ease-in-out;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+  z-index: 1; /* Above the base background-color */
+}
+
+.hero.loaded::before {
+  opacity: 1;
+}
+
+/* When showing Walnut banner, hide the Shikara pseudo-element */
+.hero.hero-walnut::before {
+  display: none;
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 3; /* Above the overlay */
   max-width: 800px;
-  padding: 0 2rem; /* Add inner padding for stability on tablets */
+  padding: 0 2rem;
 }
 
 @media (max-width: 768px) {
@@ -261,12 +281,11 @@ const addToCart = (product) => {
     text-align: center;
     justify-content: center;
   }
+  .hero::before {
+    background-position: 35% center;
+  }
   .hero-overlay {
-    /* Darker bottom gradient for mobile text contrast, shift image to keep Shikara visible */
-    background-image: 
-      linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.8) 100%),
-      url("@/assets/bg/shikara-snow-chinar-dal-lake-mountains.png");
-    background-position: 35% center; /* Shift focus to the Shikara on mobile */
+    background-image: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
   }
   .hero-content {
     max-width: 100%;
