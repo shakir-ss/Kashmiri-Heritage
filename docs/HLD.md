@@ -24,9 +24,12 @@ The platform is a premium e-commerce application designed for global reach and h
 A custom-built analytics suite that tracks:
 *   **Conversion Funnel:** Abandoned cart tracking for items older than 24 hours.
 *   **Traffic Intelligence:** Product view counters and popularity heatmaps.
-*   **Revenue Metrics:** Real-time calculation of total revenue and best-selling artisans.
+*   **Revenue Metrics:** Real-time calculation of total revenue from verified (paid) orders.
+
+### D. Enhanced Data Model
+*   **Multimedia Integration:** Support for multiple high-resolution images per product, with a primary image identification system.
+*   **Variants & Weights:** Support for weight-based pricing (grams) and arbitrary product variants (size, color, material) to accommodate both dry fruits and handicrafts.
 
 ## 4. Integration Layer
-*   **Logistics:** Pincode-based shipping calculator with local radius exemptions.
+*   **Logistics:** Pincode-based shipping calculator. Local radius patrons receive **COMPLIMENTARY** shipping, while all other destinations are charged a flat ₹50 fee.
 *   **Communication:** Twilio/WhatsApp integration for real-time customer transactional alerts.
-*   **Multimedia:** Support for local high-resolution asset hosting and external CDN-linked images.

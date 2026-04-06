@@ -303,7 +303,18 @@ const validateAll = () => {
   validateField('city')
   validateField('pincode')
   validateField('agreed')
-  return !Object.values(errors.value).some(e => e !== '')
+  
+  const hasErrors = Object.values(errors.value).some(e => e !== '')
+  if (hasErrors) {
+    // Scroll to first error
+    setTimeout(() => {
+      const firstError = document.querySelector('.error-text')
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+  return !hasErrors
 }
 
 const subtotal = computed(() => {
@@ -511,7 +522,7 @@ const handleCheckout = async () => {
 
 .input-wrapper input, .input-wrapper select {
   width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
+  padding: 1.1rem 1rem 1.1rem 3.25rem;
   border: 2px solid #eee;
   border-radius: 12px;
   font-size: 1rem;
@@ -667,13 +678,15 @@ const handleCheckout = async () => {
 
 .commitment-info {
   margin-top: 1.5rem;
-  padding: 1.25rem;
-  background: #fff9f0;
-  border-left: 4px solid var(--secondary);
-  border-radius: 0 8px 8px 0;
+  padding: 1.5rem;
+  background: #fffcf5;
+  border: 2px solid var(--secondary);
+  border-left-width: 8px;
+  border-radius: 12px;
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   align-items: center;
+  box-shadow: 0 4px 15px rgba(244, 164, 96, 0.1);
 }
 
 .info-icon { font-size: 1.5rem; }
@@ -813,5 +826,11 @@ const handleCheckout = async () => {
 @media (max-width: 1024px) {
   .checkout-grid { grid-template-columns: 1fr; gap: 2rem; }
   .form-row { flex-direction: column; gap: 1.25rem; }
+  .btn-block {
+    width: 100%;
+    padding: 1.25rem;
+    font-size: 1.1rem;
+    box-shadow: 0 8px 25px rgba(74, 44, 42, 0.15);
+  }
 }
 </style>

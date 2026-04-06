@@ -69,7 +69,20 @@ def step_impl(context, address, phone):
         "pincode": "190001",
         "payment_mode": "mock" # Use mock for API tests to bypass RZP
     }
-    context.response = context.api_session.post(f"{context.base_api_url}/orders/place", json=payload)
+    res = context.api_session.post(f"{context.base_api_url}/orders/place", json=payload)
+    context.response = res
+    
+    # If the response is successful and it's a mock payment, call verify
+    if res.status_code == 201:
+        order_data = res.json()
+        verify_payload = {
+            "razorpay_order_id": order_data.get("razorpay_order_id", "mock_order_id"),
+            "razorpay_payment_id": "mock_payment_api",
+            "razorpay_signature": "mock_signature",
+            "order_id": order_data.get("order_id")
+        }
+        # Call verify endpoint to clear the cart
+        context.api_session.post(f"{context.base_api_url}/orders/verify", json=verify_payload)
 
 
 @then('the order should be created successfully')

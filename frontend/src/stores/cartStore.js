@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAuthStore } from './authStore'
+import { useWishlistStore } from './wishlistStore'
 import { API_URL } from '../config'
 
 export const useCartStore = defineStore('cart', {
@@ -11,7 +12,13 @@ export const useCartStore = defineStore('cart', {
 
   getters: {
     cartCount: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
-    cartTotal: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
+    cartTotal: (state) => state.items.reduce((total, item) => {
+      // Only include items that are in stock in the total
+      if (item.stock > 0) {
+        return total + (item.price * item.quantity)
+      }
+      return total
+    }, 0),
     isInCart: (state) => (productId) => state.items.some(item => item.product_id === productId)
   },
 
@@ -65,6 +72,34 @@ export const useCartStore = defineStore('cart', {
 
       if (auth.isAuthenticated) {
         await axios.put('/api/cart/update', { product_id: productId, quantity })
+      }
+    },
+
+    async removeItem(productId) {
+      const auth = useAuthStore()
+      this.items = this.items.filter(i => i.product_id !== productId)
+      this.persist()
+
+      if (auth.isAuthenticated) {
+        await axios.delete(`/api/cart/remove/${productId}`)
+      }
+    },
+
+    async moveToWishlist(productId) {
+      const auth = useAuthStore()
+      const wishlist = useWishlistStore()
+      
+      if (!auth.isAuthenticated) {
+        alert('Please login to save items to your wishlist.')
+        return
+      }
+
+      const item = this.items.find(i => i.product_id === productId)
+      if (item) {
+        // Mock product object for wishlist toggle
+        const productObj = { id: productId, name: item.name, price: item.price, image_url: item.image_url }
+        await wishlist.toggleWishlist(productObj)
+        await this.removeItem(productId)
       }
     },
 

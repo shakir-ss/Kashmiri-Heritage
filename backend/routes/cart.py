@@ -14,7 +14,8 @@ def get_cart(current_user):
         'name': item.product.name,
         'price': item.product.discount_price or item.product.price,
         'quantity': item.quantity,
-        'image_url': item.product.image_url
+        'image_url': item.product.image_url,
+        'stock': item.product.stock  # Crucial: Send real-time stock
     } for item in items])
 
 @cart_bp.route('/add', methods=['POST'])

@@ -22,6 +22,6 @@ This document outlines the end-to-end user experience for customers on the Kashm
 *   **Security:** Trust badges (SSL, Priority Shipping, Hand-Inspected) are visible throughout the final steps.
 
 ## 4. Post-Purchase Engagement
-*   **Order Securing:** Upon success, users receive a professional "Transaction Reference."
-*   **Real-time Notifications:** An automated WhatsApp confirmation is triggered via Twilio.
-*   **Legacy Tracking:** Users can view their full "Order History" to track their acquisition's progress.
+*   **Order Securing:** Upon successful payment verification (The Final Handshake), users are redirected to a success screen with a professional "Transaction Reference."
+*   **Real-time Notifications:** An automated WhatsApp confirmation is triggered via Twilio, providing immediate reassurance.
+*   **Legacy Tracking:** Users can view their full "Order History" to track their acquisition's progress and monitor the status of their heritage pieces.
