@@ -197,8 +197,14 @@ const handleScroll = () => {
   scrolly.value = window.scrollY
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+  
+  // Load categories for mega menu
+  try {
+    const res = await axios.get('/api/products/categories')
+    categories.value = res.data
+  } catch {}
 
   // Silent ping to wake up the Render backend (Free Tier)
   axios.get('/health').catch(() => {
@@ -506,5 +512,142 @@ const handleLogout = () => {
     grid-template-columns: 1fr;
     gap: 2.5rem;
   }
+}
+
+/* ===== MEGA MENU ===== */
+.mega-menu-wrapper {
+  position: relative;
+}
+
+.mega-trigger {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: color 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mega-trigger:hover { color: var(--secondary); }
+
+.mega-menu {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+  z-index: 900;
+  border-top: 3px solid var(--secondary);
+}
+
+.mega-inner {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 3rem;
+  padding: 2.5rem 0;
+}
+
+/* Search pane */
+.mega-search {
+  position: relative;
+}
+
+.mega-search input {
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mega-search input:focus { border-color: var(--secondary); }
+
+.mega-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: #fdfaf5; }
+
+.suggestion-img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.suggestion-item span { flex: 1; font-size: 0.9rem; }
+.suggestion-item strong { color: var(--secondary); font-size: 0.9rem; }
+
+/* Category grid pane */
+.mega-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+  align-content: start;
+}
+
+.mega-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.2rem 0.75rem;
+  border-radius: 12px;
+  border: 2px solid #f0ede8;
+  text-decoration: none;
+  color: var(--primary);
+  transition: all 0.2s;
+  background: #fdfaf5;
+}
+
+.mega-cat-card:hover {
+  border-color: var(--secondary);
+  background: #fff8ee;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.mega-cat-icon { font-size: 2rem; }
+.mega-cat-name { font-size: 0.8rem; font-weight: 700; text-align: center; }
+
+.all-link { border-color: var(--secondary); }
+
+/* Transition */
+.mega-fade-enter-active,
+.mega-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.mega-fade-enter-from,
+.mega-fade-leave-to { opacity: 0; transform: translateY(-8px); }
+
+@media (max-width: 768px) {
+  .mega-menu-wrapper { width: 100%; }
+  .mega-menu { top: 0; position: static; box-shadow: none; border: none; }
+  .mega-inner { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 </style>

@@ -221,6 +221,25 @@
         </button>
       </div>
     </div>
+
+    <!-- Cross-sell: Related Products -->
+    <div class="related-products mt-4" v-if="relatedProducts.length > 0">
+      <h2 class="section-title">You May Also Love</h2>
+      <div class="related-grid">
+        <router-link
+          v-for="rp in relatedProducts"
+          :key="rp.id"
+          :to="`/products/${rp.id}`"
+          class="related-card card"
+        >
+          <img :src="rp.image_url" :alt="rp.name" class="related-img" />
+          <div class="related-info">
+            <p class="related-name">{{ rp.name }}</p>
+            <strong class="related-price">₹{{ rp.discount_price || rp.price }}</strong>
+          </div>
+        </router-link>
+      </div>
+    </div>
   </div>
   <div v-else-if="loading" class="container loading-state">
     <p>Discovering Kashmiri treasures...</p>
@@ -249,6 +268,7 @@ const quantity = ref(1)
 const activeImage = ref(null)
 const selectedVariant = ref(null)
 const showStickyBar = ref(false)
+const relatedProducts = ref([])
 
 const newReview = ref({ rating: 5, comment: '' })
 const submittingReview = ref(false)
@@ -266,6 +286,11 @@ onMounted(async () => {
   product.value = await productStore.fetchProductById(route.params.id)
   if (product.value) {
     activeImage.value = product.value.image_url
+    // Fetch related products in same category
+    try {
+      const res = await axios.get('/api/products/', { params: { category: product.value.category_id } })
+      relatedProducts.value = res.data.filter(p => p.id !== product.value.id).slice(0, 4)
+    } catch {}
   }
   loading.value = false
   wishlistStore.fetchWishlist()
@@ -851,5 +876,62 @@ const submitReview = async () => {
 
 @media (min-width: 992px) {
   .sticky-mobile-bar { display: none; }
+}
+
+/* ===== RELATED PRODUCTS ===== */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.related-card {
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+  overflow: hidden;
+}
+
+.related-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.related-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.related-info {
+  padding: 1rem;
+}
+
+.related-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--primary);
+}
+
+.related-price {
+  color: var(--secondary);
+  font-size: 1rem;
+}
+
+/* Rating select row */
+.rating-select {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.rating-select select {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }
 </style>

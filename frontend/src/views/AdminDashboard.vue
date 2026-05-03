@@ -346,6 +346,17 @@
             </div>
             <button type="button" @click="addImageField" class="btn-text">+ Add Another Image</button>
           </div>
+
+          <!-- 3D Model URL (Optional) -->
+          <div class="form-group">
+            <label for="prod-3d-model">3D / AR Model URL <span class="optional-badge">Optional</span></label>
+            <input
+              id="prod-3d-model"
+              v-model="form.model_3d_url"
+              placeholder="https://example.com/model.glb"
+            />
+            <small class="hint-text">Paste a public .glb or .gltf URL. When present, customers will see an interactive 3D viewer on the product page.</small>
+          </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-outline">Cancel</button>
             <button type="submit" class="btn btn-secondary">Save Product</button>
@@ -462,7 +473,8 @@ const form = ref({
   image_url: '',
   additional_images: [],
   weight_grams: 0,
-  variants: []
+  variants: [],
+  model_3d_url: ''
 })
 
 const catForm = ref({
@@ -655,7 +667,8 @@ const editProduct = (product) => {
     ...product,
     additional_images: product.images ? [...product.images] : [],
     variants: product.variants ? [...product.variants] : [],
-    is_active: product.is_active // Ensure this is captured
+    is_active: product.is_active,
+    model_3d_url: product.attributes?.['3d_model_url'] || ''
   }
   showAddModal.value = true
 }
@@ -665,6 +678,14 @@ const saveProduct = async () => {
   form.value.stock = Number(form.value.stock)
   form.value.price = Number(form.value.price)
   if (form.value.discount_price) form.value.discount_price = Number(form.value.discount_price)
+  
+  // Merge 3D model URL into attributes object
+  if (!form.value.attributes) form.value.attributes = {}
+  if (form.value.model_3d_url && form.value.model_3d_url.trim()) {
+    form.value.attributes['3d_model_url'] = form.value.model_3d_url.trim()
+  } else {
+    delete form.value.attributes['3d_model_url']
+  }
   
   let success
   if (editingId.value) {
@@ -692,7 +713,8 @@ const closeModal = () => {
     additional_images: [],
     weight_grams: 0,
     variants: [],
-    is_active: true // Reset to default
+    is_active: true,
+    model_3d_url: ''
   }
 }
 </script>
@@ -1011,5 +1033,27 @@ const closeModal = () => {
     width: 95%;
     padding: 1.5rem;
   }
+}
+
+.optional-badge {
+  display: inline-block;
+  background: #f0ede8;
+  color: #8c6d5c;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.hint-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #999;
+  line-height: 1.5;
 }
 </style>
