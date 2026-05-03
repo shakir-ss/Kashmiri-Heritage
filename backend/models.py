@@ -29,6 +29,7 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(120), unique=True, nullable=False)
     description = db.Column(db.Text)
+    image_url = db.Column(db.String(255))
     
     products = db.relationship('Product', backref='category', lazy=True)
 
@@ -85,8 +86,10 @@ class Order(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     prepaid_amount = db.Column(db.Float, default=0.0)
     balance_on_delivery = db.Column(db.Float, default=0.0)
-    amount_collected = db.Column(db.Float, default=0.0) # Added for COD reconciliation
+    amount_collected = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='pending') # pending, paid, shipped, cancelled, delivered
+    tracking_link = db.Column(db.String(500))
+    tracking_number = db.Column(db.String(100))
     payment_id = db.Column(db.String(100))
     address = db.Column(db.Text, nullable=False) # Street address
     city = db.Column(db.String(100))
@@ -136,6 +139,44 @@ class ContactInquiry(db.Model):
     status = db.Column(db.String(20), default='pending') # pending, responded, closed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class B2BInquiry(db.Model):
+    __tablename__ = 'b2b_inquiries'
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(150), nullable=False)
+    contact_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20))
+    requirements = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending') # pending, responded, closed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Review(db.Model):
+    __tablename__ = 'reviews'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_approved = db.Column(db.Boolean, default=True)
+
+    images = db.relationship('ReviewImage', backref='review', lazy=True, cascade="all, delete-orphan")
+
+class ReviewImage(db.Model):
+    __tablename__ = 'review_images'
+    id = db.Column(db.Integer, primary_key=True)
+    review_id = db.Column(db.Integer, db.ForeignKey('reviews.id'), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+
+class AbandonedCart(db.Model):
+    __tablename__ = 'abandoned_carts'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    cart_data = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    recovered = db.Column(db.Boolean, default=False)
+    email_sent = db.Column(db.Boolean, default=False)
+
 class PromoCode(db.Model):
     __tablename__ = 'promo_codes'
     id = db.Column(db.Integer, primary_key=True)
@@ -173,25 +214,4 @@ class Address(db.Model):
     
     user = db.relationship('User', backref=db.backref('addresses', lazy=True))
 
-class B2BInquiry(db.Model):
-    __tablename__ = 'b2b_inquiries'
-    id = db.Column(db.Integer, primary_key=True)
-    company_name = db.Column(db.String(150), nullable=False)
-    contact_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
-    requirements = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending') # pending, contacted, closed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Review(db.Model):
-    __tablename__ = 'reviews'
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False) # 1 to 5
-    comment = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    product = db.relationship('Product', backref=db.backref('reviews', lazy=True))
-    user = db.relationship('User')
