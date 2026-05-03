@@ -158,6 +158,55 @@
 
     <hr class="divider" />
 
+    <!-- B2B / Wholesale Inquiries -->
+    <section class="admin-section">
+      <h2 class="section-title">Wholesale (B2B) Inquiries</h2>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Contact</th>
+              <th>Requirements</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b2b in b2bInquiries" :key="b2b.id">
+              <td>
+                <div class="cust-info">
+                  <strong>{{ b2b.company_name }}</strong>
+                  <small>{{ b2b.email }}</small>
+                  <small v-if="b2b.phone">{{ b2b.phone }}</small>
+                </div>
+              </td>
+              <td>{{ b2b.contact_name }}</td>
+              <td>
+                <p class="mini-message">{{ truncate(b2b.requirements, 60) }}</p>
+              </td>
+              <td>
+                <span class="status-badge" :class="b2b.status">{{ b2b.status }}</span>
+              </td>
+              <td class="actions">
+                <button @click="viewB2B(b2b)" class="btn-text">View</button>
+                <select @change="updateB2BStatus(b2b.id, $event.target.value)" :value="b2b.status" class="status-select">
+                  <option value="pending">Pending</option>
+                  <option value="responded">Responded</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </td>
+            </tr>
+            <tr v-if="b2bInquiries && b2bInquiries.length === 0">
+              <td colspan="5" class="text-center">No B2B inquiries yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
     <!-- Customer Inquiries -->
     <section class="admin-section">
       <h2 class="section-title">Customer Inquiries</h2>
@@ -378,6 +427,16 @@
             <label for="cat-desc">Description</label>
             <textarea id="cat-desc" v-model="catForm.description" rows="3"></textarea>
           </div>
+          <div class="form-group">
+            <label>Category Image</label>
+            <div class="image-input-group">
+              <input v-model="catForm.image_url" placeholder="Image URL..." style="flex-grow: 1; padding: 0.5rem;" />
+              <button type="button" @click="uploadImageLocal" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Upload Native</button>
+            </div>
+            <div v-if="catForm.image_url" class="mt-2">
+              <img :src="catForm.image_url" alt="Preview" style="max-height: 80px; border-radius: 4px;" />
+            </div>
+          </div>
           <div class="modal-actions">
             <button type="button" @click="closeCategoryModal" class="btn btn-outline">Cancel</button>
             <button type="submit" class="btn btn-secondary">Save Category</button>
@@ -457,6 +516,7 @@ const editingId = ref(null)
 const editingCatId = ref(null)
 const orders = ref([])
 const inquiries = ref([])
+const b2bInquiries = ref([])
 const selectedOrder = ref(null)
 
 const lowStockProducts = computed(() => {
@@ -479,7 +539,8 @@ const form = ref({
 
 const catForm = ref({
   name: '',
-  description: ''
+  description: '',
+  image_url: ''
 })
 
 onMounted(() => {
@@ -488,7 +549,30 @@ onMounted(() => {
   analyticsStore.fetchStats()
   fetchOrders()
   fetchInquiries()
+  fetchB2BInquiries()
 })
+
+const fetchB2BInquiries = async () => {
+  try {
+    const res = await axios.get('/api/orders/b2b/admin')
+    b2bInquiries.value = res.data
+  } catch (err) {
+    console.error('Failed to fetch B2B inquiries:', err)
+  }
+}
+
+const viewB2B = (b2b) => {
+  alert(`B2B Inquiry from ${b2b.company_name} (${b2b.contact_name})\n\nRequirements:\n${b2b.requirements}\n\nContact:\nEmail: ${b2b.email}\nPhone: ${b2b.phone || 'N/A'}`)
+}
+
+const updateB2BStatus = async (id, newStatus) => {
+  try {
+    await axios.put(`/api/orders/b2b/admin/${id}`, { status: newStatus })
+    await fetchB2BInquiries()
+  } catch (err) {
+    alert('Failed to update status')
+  }
+}
 
 const fetchInquiries = async () => {
   try {
@@ -562,6 +646,27 @@ const updateInquiryStatus = async (id, newStatus) => {
   }
 }
 
+const uploadImageLocal = async () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const formData = new FormData()
+    formData.append('image', file)
+    try {
+      const res = await axios.post('/api/upload/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      catForm.value.image_url = res.data.image_url
+    } catch (err) {
+      alert('Upload failed: ' + (err.response?.data?.message || err.message))
+    }
+  }
+  input.click()
+}
+
 const truncate = (text, length) => {
   return text.length > length ? text.substring(0, length) + '...' : text
 }
@@ -585,10 +690,10 @@ const removeVariantField = (index) => {
 const openCategoryModal = (cat = null) => {
   if (cat) {
     editingCatId.value = cat.id
-    catForm.value = { name: cat.name, description: cat.description }
+    catForm.value = { name: cat.name, description: cat.description, image_url: cat.image_url || '' }
   } else {
     editingCatId.value = null
-    catForm.value = { name: '', description: '' }
+    catForm.value = { name: '', description: '', image_url: '' }
   }
   showCategoryModal.value = true
 }
@@ -625,8 +730,14 @@ const fetchOrders = async () => {
 }
 
 const updateOrderStatus = async (id, newStatus) => {
+  let tracking_link = null;
+  let tracking_number = null;
+  if (newStatus === 'shipped') {
+    tracking_link = prompt('Enter Tracking URL (Optional):');
+    tracking_number = prompt('Enter Tracking Number (Optional):');
+  }
   try {
-    await axios.put(`/api/orders/${id}/status`, { status: newStatus })
+    await axios.put(`/api/orders/${id}/status`, { status: newStatus, tracking_link, tracking_number })
     await fetchOrders()
   } catch (err) {
     alert('Failed to update order status')

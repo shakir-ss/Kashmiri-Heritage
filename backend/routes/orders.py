@@ -240,6 +240,14 @@ def update_order_status(current_user, id):
     order = Order.query.get_or_404(id)
     data = request.get_json()
     status = data.get('status')
+    tracking_link = data.get('tracking_link')
+    tracking_number = data.get('tracking_number')
+
+    if tracking_link is not None:
+        order.tracking_link = tracking_link
+    if tracking_number is not None:
+        order.tracking_number = tracking_number
+
     if status:
         order.status = status
         db.session.commit()
@@ -253,8 +261,14 @@ def update_order_status(current_user, id):
                 except: pass
             threading.Thread(target=notify).start()
             
-        return jsonify({'message': 'Order status updated successfully'})
-    return jsonify({'message': 'Status is required'}), 400
+        return jsonify({'message': 'Order updated successfully'})
+    
+    # Allow just updating tracking without status change
+    if tracking_link or tracking_number:
+        db.session.commit()
+        return jsonify({'message': 'Tracking info updated successfully'})
+
+    return jsonify({'message': 'No updates provided'}), 400
 
 @orders_bp.route('/<int:id>/collect', methods=['PUT'])
 @token_required
@@ -324,3 +338,52 @@ def submit_b2b_inquiry():
     db.session.commit()
     
     return jsonify({'message': 'B2B inquiry submitted successfully'}), 201
+
+@orders_bp.route('/b2b/admin', methods=['GET'])
+@token_required
+@admin_required
+def get_b2b_inquiries(current_user):
+    inquiries = B2BInquiry.query.order_by(B2BInquiry.created_at.desc()).all()
+    return jsonify([{
+        'id': i.id,
+        'company_name': i.company_name,
+        'contact_name': i.contact_name,
+        'email': i.email,
+        'phone': i.phone,
+        'requirements': i.requirements,
+        'status': i.status,
+        'created_at': i.created_at
+    } for i in inquiries])
+
+@orders_bp.route('/b2b/admin/<int:id>', methods=['PUT'])
+@token_required
+@admin_required
+def update_b2b_inquiry(current_user, id):
+    inquiry = B2BInquiry.query.get_or_404(id)
+    data = request.get_json()
+    if 'status' in data:
+        inquiry.status = data['status']
+        db.session.commit()
+        return jsonify({'message': 'Inquiry status updated'})
+    return jsonify({'message': 'No status provided'}), 400
+
+@orders_bp.route('/track', methods=['GET'])
+def track_order():
+    order_id = request.args.get('order_id')
+    email = request.args.get('email')
+    
+    if not order_id or not email:
+        return jsonify({'message': 'Order ID and Email are required'}), 400
+        
+    order = Order.query.filter_by(id=order_id).first()
+    if not order or order.user.email != email:
+        return jsonify({'message': 'Order not found or email mismatch'}), 404
+        
+    return jsonify({
+        'id': order.id,
+        'status': order.status,
+        'tracking_link': order.tracking_link,
+        'tracking_number': order.tracking_number,
+        'created_at': order.created_at,
+        'total_amount': order.total_amount
+    }), 200

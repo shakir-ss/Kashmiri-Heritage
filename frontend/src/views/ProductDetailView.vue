@@ -176,6 +176,13 @@
           </select>
         </div>
         <textarea v-model="newReview.comment" placeholder="Share your experience..." rows="3" class="mt-1"></textarea>
+        <div class="mt-1 mb-1">
+          <input type="file" accept="image/*" @change="handleReviewImageUpload" id="review-img-upload" style="display: none;" />
+          <button @click="triggerImageUpload" class="btn btn-outline btn-sm">📸 Attach Photo</button>
+          <div v-if="newReview.images && newReview.images.length > 0" class="review-img-preview mt-1">
+            <img v-for="(img, i) in newReview.images" :key="i" :src="img" style="height: 60px; margin-right: 10px; border-radius: 4px;" />
+          </div>
+        </div>
         <button @click="submitReview" class="btn btn-secondary mt-1" :disabled="submittingReview">Submit Review</button>
       </div>
       <div v-else class="card mb-2">
@@ -190,6 +197,9 @@
           </div>
           <p class="review-date">{{ new Date(review.created_at).toLocaleDateString() }}</p>
           <p class="review-comment">{{ review.comment }}</p>
+          <div v-if="review.images && review.images.length > 0" class="review-gallery mt-1">
+            <img v-for="(img, idx) in review.images" :key="idx" :src="img" style="height: 80px; margin-right: 10px; border-radius: 4px; object-fit: cover;" />
+          </div>
         </div>
       </div>
       <div v-else>
@@ -270,7 +280,7 @@ const selectedVariant = ref(null)
 const showStickyBar = ref(false)
 const relatedProducts = ref([])
 
-const newReview = ref({ rating: 5, comment: '' })
+const newReview = ref({ rating: 5, comment: '', images: [] })
 const submittingReview = ref(false)
 
 const handleScroll = () => {
@@ -390,14 +400,50 @@ const buyNow = () => {
   router.push('/checkout')
 }
 
+const triggerImageUpload = () => {
+  document.getElementById('review-img-upload').click()
+}
+
+const handleReviewImageUpload = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const formData = new FormData()
+  formData.append('image', file)
+  try {
+    const res = await axios.post('/api/upload/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    newReview.value.images.push(res.data.image_url)
+  } catch (err) {
+    alert('Upload failed')
+  }
+}
+
 const submitReview = async () => {
   if (!newReview.value.rating) return
   submittingReview.value = true
   try {
-    await axios.post(`/api/products/${product.value.id}/reviews`, newReview.value)
+    // Check if new reviews endpoint is active, otherwise fallback
+    try {
+      await axios.post('/api/reviews/', {
+        product_id: product.value.id,
+        user_id: authStore.user?.id,
+        rating: newReview.value.rating,
+        comment: newReview.value.comment,
+        images: newReview.value.images
+      })
+    } catch {
+      await axios.post(`/api/products/${product.value.id}/reviews`, newReview.value)
+    }
+    
     // Reload product to get new reviews
-    product.value = await productStore.fetchProductById(route.params.id)
-    newReview.value = { rating: 5, comment: '' }
+    const reviewRes = await axios.get(`/api/reviews/product/${product.value.id}`).catch(() => null)
+    if (reviewRes) {
+      product.value.reviews = reviewRes.data
+    } else {
+      product.value = await productStore.fetchProductById(route.params.id)
+    }
+    newReview.value = { rating: 5, comment: '', images: [] }
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to submit review')
   } finally {

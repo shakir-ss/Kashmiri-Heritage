@@ -7,7 +7,7 @@
         <span>Authentic Kashmiri Treasures Delivered Worldwide</span>
         <div class="top-links">
           <router-link to="/orders" v-if="auth.isAuthenticated">My Orders</router-link>
-          <a href="#">Track Shipping</a>
+          <router-link to="/track">Track Shipping</router-link>
         </div>
       </div>
     </div>
@@ -63,7 +63,10 @@
                       class="mega-cat-card"
                       @click="closeMega"
                     >
-                      <span class="mega-cat-icon">{{ cat.icon || '🌿' }}</span>
+                      <span v-if="cat.image_url" class="mega-cat-img">
+                        <img :src="cat.image_url" :alt="cat.name" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;" />
+                      </span>
+                      <span v-else class="mega-cat-icon">{{ cat.icon || '🌿' }}</span>
                       <span class="mega-cat-name">{{ cat.name }}</span>
                     </router-link>
                     <router-link to="/products" class="mega-cat-card all-link" @click="closeMega">

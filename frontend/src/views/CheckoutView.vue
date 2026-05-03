@@ -36,6 +36,17 @@
                 <span class="error-text" v-if="errors.name">{{ errors.name }}</span>
               </div>
               <div class="form-group flex-1">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper" :class="{ 'error': errors.email }">
+                  <span class="input-icon">✉️</span>
+                  <input id="email" v-model="form.email" type="email" placeholder="Email Address" @blur="captureAbandonedCart('email')" />
+                </div>
+                <span class="error-text" v-if="errors.email">{{ errors.email }}</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
                 <label for="phone">Phone Number</label>
                 <div class="input-wrapper" :class="{ 'error': errors.phone }">
                   <span class="input-icon">📞</span>
@@ -312,6 +323,7 @@ const selectedSavedAddress = ref(null)
 
 const form = ref({
   name: '',
+  email: '',
   phone: '',
   address: '',
   city: '',
@@ -324,6 +336,7 @@ const form = ref({
 
 const errors = ref({
   name: '',
+  email: '',
   phone: '',
   address: '',
   city: '',
@@ -336,6 +349,7 @@ const errors = ref({
 onMounted(async () => {
   if (authStore.isAuthenticated && authStore.user) {
     form.value.name = authStore.user.name || ''
+    form.value.email = authStore.user.email || ''
     
     // Fetch Saved Addresses
     try {
@@ -391,6 +405,9 @@ const validateField = (field) => {
   errors.value[field] = ''
   
   if (field === 'name' && !form.value.name) errors.value.name = 'Full name is required'
+  if (field === 'email' && !form.value.email) errors.value.email = 'Email is required'
+  else if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) errors.value.email = 'Invalid email'
+  
   if (field === 'phone') {
     const phoneRegex = /^[0-9+\s]{10,20}$/
     if (!form.value.phone) errors.value.phone = 'Phone number is required'
@@ -405,8 +422,21 @@ const validateField = (field) => {
   if (field === 'agreed' && !form.value.agreed) errors.value.agreed = 'Please agree to terms'
 }
 
+const captureAbandonedCart = async (field) => {
+  validateField(field)
+  if (!errors.value.email && form.value.email && cartStore.items.length > 0) {
+    try {
+      await axios.post('/api/cart/abandoned', {
+        email: form.value.email,
+        cart_data: cartStore.items
+      })
+    } catch(e) {}
+  }
+}
+
 const validateAll = () => {
   validateField('name')
+  validateField('email')
   validateField('phone')
   validateField('address')
   validateField('city')

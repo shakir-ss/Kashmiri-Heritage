@@ -67,3 +67,18 @@ def clear_cart(current_user):
     CartItem.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     return jsonify({'message': 'Cart cleared'})
+
+@cart_bp.route('/abandoned', methods=['POST'])
+def capture_abandoned_cart():
+    from models import AbandonedCart
+    data = request.get_json()
+    email = data.get('email')
+    cart_data = data.get('cart_data', [])
+    if email and cart_data:
+        existing = AbandonedCart.query.filter_by(email=email).first()
+        if existing:
+            existing.cart_data = cart_data
+        else:
+            db.session.add(AbandonedCart(email=email, cart_data=cart_data))
+        db.session.commit()
+    return jsonify({'message': 'Cart captured'}), 200

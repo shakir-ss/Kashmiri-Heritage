@@ -49,6 +49,8 @@ def create_app(config_name):
     from routes.analytics import analytics_bp
     from routes.wishlist import wishlist_bp
     from routes.contact import contact_bp
+    from routes.upload import upload_bp
+    from routes.reviews import reviews_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(products_bp, url_prefix='/api/products')
@@ -57,6 +59,8 @@ def create_app(config_name):
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
     app.register_blueprint(wishlist_bp, url_prefix='/api/wishlist')
     app.register_blueprint(contact_bp, url_prefix='/api/contact')
+    app.register_blueprint(upload_bp, url_prefix='/api/upload')
+    app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
 
     @app.route('/', methods=['GET'])
     def index():

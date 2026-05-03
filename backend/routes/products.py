@@ -21,7 +21,8 @@ def get_categories():
         'id': c.id,
         'name': c.name,
         'slug': c.slug,
-        'description': c.description
+        'description': c.description,
+        'image_url': c.image_url
     } for c in categories])
 
 @products_bp.route('/categories', methods=['POST'])
@@ -45,7 +46,8 @@ def create_category(current_user):
     new_category = Category(
         name=name,
         slug=slug,
-        description=data.get('description')
+        description=data.get('description'),
+        image_url=data.get('image_url')
     )
     try:
         db.session.add(new_category)
@@ -64,6 +66,8 @@ def update_category(current_user, id):
     name = data.get('name', category.name)
     category.name = name
     category.description = data.get('description', category.description)
+    if 'image_url' in data:
+        category.image_url = data.get('image_url')
     
     slug = data.get('slug') or name.lower().replace(' ', '-')
     
