@@ -2,7 +2,7 @@ import threading
 import razorpay
 import time
 from flask import Blueprint, request, jsonify, current_app
-from models import db, Order, OrderItem, CartItem, Product, User
+from models import db, Order, OrderItem, CartItem, Product, User, PromoCode, ReturnRequest, B2BInquiry
 from .auth import token_required, admin_required
 from services.messaging_service import MessagingService
 
@@ -43,6 +43,17 @@ def place_order(current_user):
 
     total_amount = subtotal + delivery_charge
     
+    # Promo Code Application
+    promo_code_str = data.get('promo_code')
+    promo = None
+    if promo_code_str:
+        promo = PromoCode.query.filter_by(code=promo_code_str, is_active=True).first()
+        if promo and promo.current_uses < promo.max_uses:
+            discount = subtotal * (promo.discount_percent / 100)
+            total_amount = max(0, total_amount - discount)
+        else:
+            return jsonify({'message': 'Invalid or expired promo code'}), 400
+
     # Calculate amount to pay NOW (Full for UPI/Card, 30% for COD)
     amount_to_pay = total_amount
     if payment_mode == 'cod':
@@ -95,6 +106,9 @@ def place_order(current_user):
             price_at_purchase=price
         ))
         # Optional: Reserve stock (Don't deduct fully yet until payment verified)
+
+    if promo:
+        promo.current_uses += 1
 
     db.session.commit()
 
@@ -187,6 +201,7 @@ def get_user_orders(current_user):
         'status': o.status,
         'created_at': o.created_at,
         'items': [{
+            'product_id': item.product.id,
             'name': item.product.name,
             'quantity': item.quantity,
             'price': item.price_at_purchase
@@ -205,11 +220,13 @@ def get_all_orders(current_user):
         'total_amount': o.total_amount,
         'prepaid_amount': o.prepaid_amount,
         'balance_on_delivery': o.balance_on_delivery,
+        'amount_collected': o.amount_collected,
         'status': o.status,
         'address': o.address,
         'phone': o.phone,
         'created_at': o.created_at,
         'items': [{
+            'product_id': item.product.id,
             'name': item.product.name,
             'quantity': item.quantity,
             'price': item.price_at_purchase
@@ -226,5 +243,84 @@ def update_order_status(current_user, id):
     if status:
         order.status = status
         db.session.commit()
+        
+        # WhatsApp notification for Shipped/Out for Delivery
+        if status in ['shipped', 'out_for_delivery']:
+            def notify():
+                try:
+                    with current_app.app_context():
+                        MessagingService.send_order_confirmation(order.phone, order.id, order.total_amount)
+                except: pass
+            threading.Thread(target=notify).start()
+            
         return jsonify({'message': 'Order status updated successfully'})
     return jsonify({'message': 'Status is required'}), 400
+
+@orders_bp.route('/<int:id>/collect', methods=['PUT'])
+@token_required
+@admin_required
+def collect_cod_balance(current_user, id):
+    order = Order.query.get_or_404(id)
+    if order.balance_on_delivery > 0:
+        order.amount_collected = order.balance_on_delivery
+        if order.status != 'delivered':
+            order.status = 'delivered'
+        db.session.commit()
+        return jsonify({'message': 'Balance collected successfully'})
+    return jsonify({'message': 'No balance to collect'}), 400
+
+@orders_bp.route('/promo/validate', methods=['POST'])
+@token_required
+def validate_promo(current_user):
+    data = request.get_json()
+    code = data.get('code')
+    
+    promo = PromoCode.query.filter_by(code=code, is_active=True).first()
+    if promo and promo.current_uses < promo.max_uses:
+        return jsonify({'valid': True, 'discount_percent': promo.discount_percent, 'message': 'Promo applied!'})
+    return jsonify({'valid': False, 'message': 'Invalid or expired promo code.'}), 400
+
+@orders_bp.route('/<int:id>/return', methods=['POST'])
+@token_required
+def request_return(current_user, id):
+    order = Order.query.get_or_404(id)
+    if order.user_id != current_user.id:
+        return jsonify({'message': 'Unauthorized'}), 403
+        
+    if order.status != 'delivered':
+        return jsonify({'message': 'Only delivered orders can be returned'}), 400
+        
+    data = request.get_json()
+    reason = data.get('reason')
+    if not reason:
+        return jsonify({'message': 'Return reason is required'}), 400
+        
+    existing_return = ReturnRequest.query.filter_by(order_id=id).first()
+    if existing_return:
+        return jsonify({'message': 'Return already requested for this order'}), 400
+        
+    return_req = ReturnRequest(order_id=id, user_id=current_user.id, reason=reason)
+    db.session.add(return_req)
+    db.session.commit()
+    
+    return jsonify({'message': 'Return requested successfully'}), 201
+
+@orders_bp.route('/b2b/inquiry', methods=['POST'])
+def submit_b2b_inquiry():
+    data = request.get_json()
+    required = ['company_name', 'contact_name', 'email', 'phone', 'requirements']
+    for req in required:
+        if not data.get(req):
+            return jsonify({'message': f'{req} is required'}), 400
+            
+    inquiry = B2BInquiry(
+        company_name=data.get('company_name'),
+        contact_name=data.get('contact_name'),
+        email=data.get('email'),
+        phone=data.get('phone'),
+        requirements=data.get('requirements')
+    )
+    db.session.add(inquiry)
+    db.session.commit()
+    
+    return jsonify({'message': 'B2B inquiry submitted successfully'}), 201

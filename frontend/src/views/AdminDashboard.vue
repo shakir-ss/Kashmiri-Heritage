@@ -25,6 +25,27 @@
       </div>
     </div>
 
+    <!-- Low Stock Alert Dashboard (AG-01) -->
+    <div v-if="lowStockProducts.length > 0" class="low-stock-dashboard card">
+      <h3 class="alert-title">⚠️ Low Stock Alerts</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in lowStockProducts" :key="item.id">
+            <td><strong>{{ item.name }}</strong></td>
+            <td><span class="status-badge" :class="item.stock === 0 ? 'inactive' : 'low-stock'">{{ item.stock }} units left</span></td>
+            <td><button @click="editProduct(item)" class="btn btn-outline btn-sm">Restock</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="insights-row">
       <!-- Popular Items -->
       <div class="insight-table card">
@@ -78,12 +99,20 @@
               <td>{{ formatDate(order.created_at) }}</td>
               <td><strong>₹{{ order.total_amount }}</strong></td>
               <td>
-                <span class="status-badge" :class="order.status">
-                  {{ order.status }}
-                </span>
+                <select @change="updateOrderStatus(order.id, $event.target.value)" :value="order.status" class="status-select" v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sub-admin'">
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="out_for_delivery">Out for Delivery</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <span v-else class="status-badge" :class="order.status">{{ order.status }}</span>
               </td>
-              <td>
-                <button @click="viewOrderDetails(order)" class="btn-text">View Items</button>
+              <td class="actions">
+                <button @click="viewOrderDetails(order)" class="btn-text">View</button>
+                <button v-if="order.balance_on_delivery > 0 && order.amount_collected < order.balance_on_delivery && (authStore.user?.role === 'admin' || authStore.user?.role === 'sub-admin')" 
+                        @click="collectCOD(order)" class="btn-text active">Collect ₹{{ order.balance_on_delivery }}</button>
               </td>
             </tr>
             <tr v-if="orders && orders.length === 0">
@@ -317,6 +346,17 @@
             </div>
             <button type="button" @click="addImageField" class="btn-text">+ Add Another Image</button>
           </div>
+
+          <!-- 3D Model URL (Optional) -->
+          <div class="form-group">
+            <label for="prod-3d-model">3D / AR Model URL <span class="optional-badge">Optional</span></label>
+            <input
+              id="prod-3d-model"
+              v-model="form.model_3d_url"
+              placeholder="https://example.com/model.glb"
+            />
+            <small class="hint-text">Paste a public .glb or .gltf URL. When present, customers will see an interactive 3D viewer on the product page.</small>
+          </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-outline">Cancel</button>
             <button type="submit" class="btn btn-secondary">Save Product</button>
@@ -345,23 +385,83 @@
         </form>
       </div>
     </div>
+    <!-- Order Details Modal -->
+    <div v-if="selectedOrder" class="modal-overlay">
+      <div class="modal-content">
+        <div class="section-header">
+          <h2>Order #{{ selectedOrder.id }} Details</h2>
+          <span class="status-badge" :class="selectedOrder.status">{{ selectedOrder.status }}</span>
+        </div>
+        
+        <div class="order-info-grid">
+          <div>
+            <strong>Customer:</strong> {{ selectedOrder.user }}<br/>
+            <small>{{ selectedOrder.user_email }}</small><br/>
+            <strong>Phone:</strong> {{ selectedOrder.phone }}
+          </div>
+          <div>
+            <strong>Shipping Address:</strong><br/>
+            {{ selectedOrder.address }}
+          </div>
+          <div>
+            <strong>Financials:</strong><br/>
+            Total: ₹{{ selectedOrder.total_amount }}<br/>
+            Prepaid: ₹{{ selectedOrder.prepaid_amount }}<br/>
+            COD Balance: ₹{{ selectedOrder.balance_on_delivery }}
+          </div>
+        </div>
+
+        <table class="admin-table mt-2">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in selectedOrder.items" :key="idx">
+              <td>{{ item.name }}</td>
+              <td>₹{{ item.price }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>₹{{ item.price * item.quantity }}</td>
+            </tr>
+            <tr v-if="!selectedOrder.items || selectedOrder.items.length === 0">
+              <td colspan="4">No items found for this order.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="modal-actions mt-3">
+          <button type="button" @click="closeOrderModal" class="btn btn-outline">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useProductStore } from '../stores/productStore'
 import { useAnalyticsStore } from '../stores/analyticsStore'
+import { useAuthStore } from '../stores/authStore'
 import axios from 'axios'
 
 const productStore = useProductStore()
 const analyticsStore = useAnalyticsStore()
+const authStore = useAuthStore()
 const showAddModal = ref(false)
 const showCategoryModal = ref(false)
 const editingId = ref(null)
 const editingCatId = ref(null)
 const orders = ref([])
 const inquiries = ref([])
+const selectedOrder = ref(null)
+
+const lowStockProducts = computed(() => {
+  return productStore.products.filter(p => p.stock <= 5)
+})
 
 const form = ref({
   name: '',
@@ -373,7 +473,8 @@ const form = ref({
   image_url: '',
   additional_images: [],
   weight_grams: 0,
-  variants: []
+  variants: [],
+  model_3d_url: ''
 })
 
 const catForm = ref({
@@ -523,6 +624,26 @@ const fetchOrders = async () => {
   }
 }
 
+const updateOrderStatus = async (id, newStatus) => {
+  try {
+    await axios.put(`/api/orders/${id}/status`, { status: newStatus })
+    await fetchOrders()
+  } catch (err) {
+    alert('Failed to update order status')
+  }
+}
+
+const collectCOD = async (order) => {
+  if (confirm(`Mark ₹${order.balance_on_delivery} as collected for Order #${order.id}?`)) {
+    try {
+      await axios.put(`/api/orders/${order.id}/collect`)
+      await fetchOrders()
+    } catch (err) {
+      alert('Failed to mark as collected')
+    }
+  }
+}
+
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleString('en-IN', {
     day: 'numeric',
@@ -533,8 +654,11 @@ const formatDate = (dateStr) => {
 }
 
 const viewOrderDetails = (order) => {
-  const itemsList = order.items.map(i => `${i.quantity}x ${i.name}`).join('\n')
-  alert(`Order #${order.id} Details:\n\nItems:\n${itemsList}\n\nAddress:\n${order.address}\n\nPhone: ${order.phone}`)
+  selectedOrder.value = order
+}
+
+const closeOrderModal = () => {
+  selectedOrder.value = null
 }
 
 const editProduct = (product) => {
@@ -543,7 +667,8 @@ const editProduct = (product) => {
     ...product,
     additional_images: product.images ? [...product.images] : [],
     variants: product.variants ? [...product.variants] : [],
-    is_active: product.is_active // Ensure this is captured
+    is_active: product.is_active,
+    model_3d_url: product.attributes?.['3d_model_url'] || ''
   }
   showAddModal.value = true
 }
@@ -553,6 +678,14 @@ const saveProduct = async () => {
   form.value.stock = Number(form.value.stock)
   form.value.price = Number(form.value.price)
   if (form.value.discount_price) form.value.discount_price = Number(form.value.discount_price)
+  
+  // Merge 3D model URL into attributes object
+  if (!form.value.attributes) form.value.attributes = {}
+  if (form.value.model_3d_url && form.value.model_3d_url.trim()) {
+    form.value.attributes['3d_model_url'] = form.value.model_3d_url.trim()
+  } else {
+    delete form.value.attributes['3d_model_url']
+  }
   
   let success
   if (editingId.value) {
@@ -580,7 +713,8 @@ const closeModal = () => {
     additional_images: [],
     weight_grams: 0,
     variants: [],
-    is_active: true // Reset to default
+    is_active: true,
+    model_3d_url: ''
   }
 }
 </script>
@@ -643,6 +777,19 @@ const closeModal = () => {
 .product-cell-link:hover .product-cell strong {
   color: var(--secondary);
 }
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
 
 .mini-thumb {
   width: 40px;
@@ -886,5 +1033,27 @@ const closeModal = () => {
     width: 95%;
     padding: 1.5rem;
   }
+}
+
+.optional-badge {
+  display: inline-block;
+  background: #f0ede8;
+  color: #8c6d5c;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.hint-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #999;
+  line-height: 1.5;
 }
 </style>

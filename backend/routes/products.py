@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, Product, Category, ProductImage, ProductVariant
-from .auth import token_required, admin_required
+from models import db, Product, Category, ProductImage, ProductVariant, Review
+from .auth import token_required, admin_required, root_admin_required
 import jwt
 
 products_bp = Blueprint('products', __name__)
@@ -84,7 +84,7 @@ def update_category(current_user, id):
 
 @products_bp.route('/categories/<int:id>', methods=['DELETE'])
 @token_required
-@admin_required
+@root_admin_required
 def delete_category(current_user, id):
     category = Category.query.get_or_404(id)
     # Check if category has products
@@ -99,7 +99,9 @@ def delete_category(current_user, id):
 @products_bp.route('/', methods=['GET'])
 def get_products():
     category_param = request.args.get('category')
-    search = request.args.get('search')
+    search = request.args.get('search') or request.args.get('q')
+    min_price = request.args.get('min_price')
+    max_price = request.args.get('max_price')
     admin_param = request.args.get('admin') == 'true'
     
     # Check if user is actually an admin before allowing 'admin=true' parameter
@@ -109,7 +111,7 @@ def get_products():
         try:
             token = auth_header.split(" ")[1]
             data = decode_token_simple(token)
-            if data and data.get('role') == 'admin':
+            if data and data.get('role') in ['admin', 'sub-admin']:
                 is_authorized_admin = True
         except:
             pass
@@ -129,7 +131,14 @@ def get_products():
                 query = query.filter(Product.id == -1)
             
     if search:
-        query = query.filter(Product.name.contains(search))
+        search_term = f"%{search}%"
+        query = query.filter(Product.name.ilike(search_term) | Product.description.ilike(search_term))
+        
+    if min_price:
+        query = query.filter(Product.price >= float(min_price))
+        
+    if max_price:
+        query = query.filter(Product.price <= float(max_price))
         
     products_list = query.all()
     return jsonify([{
@@ -182,8 +191,37 @@ def get_product(id):
             'price_modifier': v.price_modifier,
             'stock': v.stock,
             'sku': v.sku
-        } for v in product.variants]
+        } for v in product.variants],
+        'reviews': [{
+            'id': r.id,
+            'user': r.user.name,
+            'rating': r.rating,
+            'comment': r.comment,
+            'created_at': r.created_at
+        } for r in product.reviews]
     })
+
+@products_bp.route('/<int:id>/reviews', methods=['POST'])
+@token_required
+def add_review(current_user, id):
+    product = Product.query.get_or_404(id)
+    data = request.get_json()
+    
+    rating = data.get('rating')
+    comment = data.get('comment', '')
+    
+    if not rating or not (1 <= int(rating) <= 5):
+        return jsonify({'message': 'Valid rating (1-5) is required'}), 400
+        
+    review = Review(
+        product_id=id,
+        user_id=current_user.id,
+        rating=int(rating),
+        comment=comment
+    )
+    db.session.add(review)
+    db.session.commit()
+    return jsonify({'message': 'Review added successfully'}), 201
 
 @products_bp.route('/', methods=['POST'])
 @token_required
@@ -279,7 +317,7 @@ def update_product(current_user, id):
 
 @products_bp.route('/<int:id>', methods=['DELETE'])
 @token_required
-@admin_required
+@root_admin_required
 def delete_product(current_user, id):
     product = Product.query.get_or_404(id)
     db.session.delete(product)

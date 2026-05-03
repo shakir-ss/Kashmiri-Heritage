@@ -144,6 +144,59 @@
       </div>
     </section>
 
+    <!-- AR / 3D Model Viewer (Mock logic if product.attributes has a 3d_model_url) -->
+    <div class="product-ar-viewer mt-4" v-if="product.attributes && product.attributes['3d_model_url']">
+      <h2 class="section-title">View in 3D / AR</h2>
+      <div class="model-container card">
+        <model-viewer 
+          :src="product.attributes['3d_model_url']" 
+          auto-rotate 
+          camera-controls 
+          ar 
+          shadow-intensity="1" 
+          style="width: 100%; height: 400px; background-color: #faf9f6;">
+        </model-viewer>
+      </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section mt-4">
+      <h2 class="section-title">Customer Reviews</h2>
+      
+      <div v-if="authStore.isAuthenticated" class="review-form card mb-2">
+        <h4>Write a Review</h4>
+        <div class="rating-select">
+          <label>Rating: </label>
+          <select v-model.number="newReview.rating">
+            <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+            <option value="4">⭐⭐⭐⭐ (4/5)</option>
+            <option value="3">⭐⭐⭐ (3/5)</option>
+            <option value="2">⭐⭐ (2/5)</option>
+            <option value="1">⭐ (1/5)</option>
+          </select>
+        </div>
+        <textarea v-model="newReview.comment" placeholder="Share your experience..." rows="3" class="mt-1"></textarea>
+        <button @click="submitReview" class="btn btn-secondary mt-1" :disabled="submittingReview">Submit Review</button>
+      </div>
+      <div v-else class="card mb-2">
+        <p>Please <router-link to="/login">login</router-link> to write a review.</p>
+      </div>
+
+      <div v-if="product.reviews && product.reviews.length > 0" class="review-list">
+        <div v-for="review in product.reviews" :key="review.id" class="review-card card">
+          <div class="review-header">
+            <strong>{{ review.user }}</strong>
+            <span class="stars">{{ '⭐'.repeat(review.rating) }}</span>
+          </div>
+          <p class="review-date">{{ new Date(review.created_at).toLocaleDateString() }}</p>
+          <p class="review-comment">{{ review.comment }}</p>
+        </div>
+      </div>
+      <div v-else>
+        <p>No reviews yet. Be the first to review this product!</p>
+      </div>
+    </div>
+
     <!-- Sticky Mobile Action Bar -->
     <div class="sticky-mobile-bar" :class="{ visible: showStickyBar }">
       <div class="sticky-bar-content container">
@@ -168,6 +221,25 @@
         </button>
       </div>
     </div>
+
+    <!-- Cross-sell: Related Products -->
+    <div class="related-products mt-4" v-if="relatedProducts.length > 0">
+      <h2 class="section-title">You May Also Love</h2>
+      <div class="related-grid">
+        <router-link
+          v-for="rp in relatedProducts"
+          :key="rp.id"
+          :to="`/products/${rp.id}`"
+          class="related-card card"
+        >
+          <img :src="rp.image_url" :alt="rp.name" class="related-img" />
+          <div class="related-info">
+            <p class="related-name">{{ rp.name }}</p>
+            <strong class="related-price">₹{{ rp.discount_price || rp.price }}</strong>
+          </div>
+        </router-link>
+      </div>
+    </div>
   </div>
   <div v-else-if="loading" class="container loading-state">
     <p>Discovering Kashmiri treasures...</p>
@@ -180,12 +252,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useWishlistStore } from '../stores/wishlistStore'
+import { useAuthStore } from '../stores/authStore'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
+const authStore = useAuthStore()
 
 const product = ref(null)
 const loading = ref(true)
@@ -193,6 +268,10 @@ const quantity = ref(1)
 const activeImage = ref(null)
 const selectedVariant = ref(null)
 const showStickyBar = ref(false)
+const relatedProducts = ref([])
+
+const newReview = ref({ rating: 5, comment: '' })
+const submittingReview = ref(false)
 
 const handleScroll = () => {
   // Show sticky bar on mobile when scrolled past 600px
@@ -207,6 +286,11 @@ onMounted(async () => {
   product.value = await productStore.fetchProductById(route.params.id)
   if (product.value) {
     activeImage.value = product.value.image_url
+    // Fetch related products in same category
+    try {
+      const res = await axios.get('/api/products/', { params: { category: product.value.category_id } })
+      relatedProducts.value = res.data.filter(p => p.id !== product.value.id).slice(0, 4)
+    } catch {}
   }
   loading.value = false
   wishlistStore.fetchWishlist()
@@ -304,6 +388,21 @@ const addToCart = () => {
 const buyNow = () => {
   cartStore.addItem(product.value, quantity.value)
   router.push('/checkout')
+}
+
+const submitReview = async () => {
+  if (!newReview.value.rating) return
+  submittingReview.value = true
+  try {
+    await axios.post(`/api/products/${product.value.id}/reviews`, newReview.value)
+    // Reload product to get new reviews
+    product.value = await productStore.fetchProductById(route.params.id)
+    newReview.value = { rating: 5, comment: '' }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to submit review')
+  } finally {
+    submittingReview.value = false
+  }
 }
 </script>
 
@@ -644,12 +743,44 @@ const buyNow = () => {
   .heritage-grid { grid-template-columns: 1fr; }
   .heritage-text { padding: 2rem; }
   .heritage-img-wrapper { height: 400px; }
-  .img-overlay-accent {
+.img-overlay-accent {
     background: linear-gradient(to bottom, rgba(250,249,246,1), rgba(250,249,246,0));
   }
 }
 
 .mt-4 { margin-top: 4rem; }
+.mb-2 { margin-bottom: 2rem; }
+.mt-1 { margin-top: 1rem; }
+
+.review-form textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.review-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.review-date {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.review-comment {
+  line-height: 1.6;
+}
 
 @media (max-width: 992px) {
   .detail-grid { grid-template-columns: 1fr; gap: 2rem; }
@@ -745,5 +876,62 @@ const buyNow = () => {
 
 @media (min-width: 992px) {
   .sticky-mobile-bar { display: none; }
+}
+
+/* ===== RELATED PRODUCTS ===== */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.related-card {
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+  overflow: hidden;
+}
+
+.related-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.related-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.related-info {
+  padding: 1rem;
+}
+
+.related-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--primary);
+}
+
+.related-price {
+  color: var(--secondary);
+  font-size: 1rem;
+}
+
+/* Rating select row */
+.rating-select {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.rating-select select {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }
 </style>

@@ -119,6 +119,26 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
+    async pushLocalToBackend() {
+      const auth = useAuthStore()
+      if (!auth.isAuthenticated || this.items.length === 0) return
+
+      try {
+        // Push all local items to backend sequentially to ensure no conflicts
+        for (const item of this.items) {
+          try {
+            await axios.post('/api/cart/add', { product_id: item.product_id, quantity: item.quantity })
+          } catch (e) {
+            console.error(`Failed to push item ${item.product_id} to backend`, e)
+          }
+        }
+        // After pushing, re-sync to get the latest authoritative state from backend
+        await this.syncWithBackend()
+      } catch (err) {
+        console.error('Push local cart failed', err)
+      }
+    },
+
     persist() {
       localStorage.setItem('cart_items', JSON.stringify(this.items))
     },

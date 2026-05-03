@@ -63,6 +63,11 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/wholesale',
+      name: 'wholesale',
+      component: () => import('../views/B2BWholesaleView.vue')
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: () => import('../views/AdminDashboard.vue'),

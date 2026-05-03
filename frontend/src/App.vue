@@ -28,7 +28,54 @@
         <div class="nav-overlay" :class="{ 'active': isMenuOpen }" @click="closeMenu"></div>
 
         <div class="nav-links" :class="{ 'mobile-active': isMenuOpen }">
-          <router-link @click="closeMenu" to="/products">Products</router-link>
+          <!-- Mega Menu Trigger -->
+          <div class="mega-menu-wrapper" @mouseenter="megaOpen = true" @mouseleave="megaOpen = false">
+            <router-link @click="closeMenu" to="/products" class="mega-trigger">Products ▾</router-link>
+            <transition name="mega-fade">
+              <div class="mega-menu" v-if="megaOpen">
+                <div class="mega-inner container">
+                  <div class="mega-search">
+                    <input
+                      v-model="megaSearch"
+                      @input="debounceMegaSearch"
+                      placeholder="Search products…"
+                      @keyup.enter="goToSearch"
+                    />
+                    <div class="mega-suggestions" v-if="megaSuggestions.length">
+                      <router-link
+                        v-for="s in megaSuggestions"
+                        :key="s.id"
+                        :to="`/products/${s.id}`"
+                        class="suggestion-item"
+                        @click="closeMega"
+                      >
+                        <img :src="s.image_url" :alt="s.name" class="suggestion-img" />
+                        <span>{{ s.name }}</span>
+                        <strong>₹{{ s.discount_price || s.price }}</strong>
+                      </router-link>
+                    </div>
+                  </div>
+                  <div class="mega-categories">
+                    <router-link
+                      v-for="cat in categories"
+                      :key="cat.id"
+                      :to="`/products?category=${cat.slug}`"
+                      class="mega-cat-card"
+                      @click="closeMega"
+                    >
+                      <span class="mega-cat-icon">{{ cat.icon || '🌿' }}</span>
+                      <span class="mega-cat-name">{{ cat.name }}</span>
+                    </router-link>
+                    <router-link to="/products" class="mega-cat-card all-link" @click="closeMega">
+                      <span class="mega-cat-icon">🛍️</span>
+                      <span class="mega-cat-name">All Products</span>
+                    </router-link>
+                  </div>
+                </div>
+              </div>
+            </transition>
+          </div>
+          <router-link @click="closeMenu" to="/wholesale">Wholesale</router-link>
           
           <div class="nav-actions">
             <router-link @click="closeMenu" to="/wishlist" class="nav-icon-link" title="Wishlist">
@@ -66,6 +113,7 @@
         <div class="footer-links">
           <h4>Quick Links</h4>
           <router-link to="/products">All Products</router-link>
+          <router-link to="/wholesale">B2B Wholesale</router-link>
           <router-link to="/about">Our Story</router-link>
           <router-link to="/contact">Contact Us</router-link>
         </div>
@@ -105,9 +153,38 @@ const cartStore = useCartStore()
 const router = useRouter()
 const scrolly = ref(0)
 const isMenuOpen = ref(false)
+const megaOpen = ref(false)
+const megaSearch = ref('')
+const megaSuggestions = ref([])
+const categories = ref([])
 
 const closeMenu = () => {
   isMenuOpen.value = false
+}
+
+const closeMega = () => {
+  megaOpen.value = false
+  megaSearch.value = ''
+  megaSuggestions.value = []
+}
+
+let megaTimer;
+const debounceMegaSearch = () => {
+  clearTimeout(megaTimer)
+  if (!megaSearch.value.trim()) { megaSuggestions.value = []; return }
+  megaTimer = setTimeout(async () => {
+    try {
+      const res = await axios.get('/api/products/', { params: { q: megaSearch.value } })
+      megaSuggestions.value = res.data.slice(0, 5)
+    } catch {}
+  }, 250)
+}
+
+const goToSearch = () => {
+  if (megaSearch.value.trim()) {
+    router.push(`/products?search=${encodeURIComponent(megaSearch.value)}`)
+    closeMega()
+  }
 }
 
 // Conditional Analytics for Local Dev
@@ -120,8 +197,14 @@ const handleScroll = () => {
   scrolly.value = window.scrollY
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+  
+  // Load categories for mega menu
+  try {
+    const res = await axios.get('/api/products/categories')
+    categories.value = res.data
+  } catch {}
 
   // Silent ping to wake up the Render backend (Free Tier)
   axios.get('/health').catch(() => {
@@ -429,5 +512,142 @@ const handleLogout = () => {
     grid-template-columns: 1fr;
     gap: 2.5rem;
   }
+}
+
+/* ===== MEGA MENU ===== */
+.mega-menu-wrapper {
+  position: relative;
+}
+
+.mega-trigger {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: color 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mega-trigger:hover { color: var(--secondary); }
+
+.mega-menu {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+  z-index: 900;
+  border-top: 3px solid var(--secondary);
+}
+
+.mega-inner {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 3rem;
+  padding: 2.5rem 0;
+}
+
+/* Search pane */
+.mega-search {
+  position: relative;
+}
+
+.mega-search input {
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mega-search input:focus { border-color: var(--secondary); }
+
+.mega-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: #fdfaf5; }
+
+.suggestion-img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.suggestion-item span { flex: 1; font-size: 0.9rem; }
+.suggestion-item strong { color: var(--secondary); font-size: 0.9rem; }
+
+/* Category grid pane */
+.mega-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+  align-content: start;
+}
+
+.mega-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.2rem 0.75rem;
+  border-radius: 12px;
+  border: 2px solid #f0ede8;
+  text-decoration: none;
+  color: var(--primary);
+  transition: all 0.2s;
+  background: #fdfaf5;
+}
+
+.mega-cat-card:hover {
+  border-color: var(--secondary);
+  background: #fff8ee;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.mega-cat-icon { font-size: 2rem; }
+.mega-cat-name { font-size: 0.8rem; font-weight: 700; text-align: center; }
+
+.all-link { border-color: var(--secondary); }
+
+/* Transition */
+.mega-fade-enter-active,
+.mega-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.mega-fade-enter-from,
+.mega-fade-leave-to { opacity: 0; transform: translateY(-8px); }
+
+@media (max-width: 768px) {
+  .mega-menu-wrapper { width: 100%; }
+  .mega-menu { top: 0; position: static; box-shadow: none; border: none; }
+  .mega-inner { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 </style>
