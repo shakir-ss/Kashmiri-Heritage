@@ -14,7 +14,17 @@
       <!-- Checkout Form -->
       <div class="checkout-sections">
         <section class="checkout-form card">
-          <h3 class="subsection-title">1. Shipping Destination</h3>
+          <div class="section-header-flex">
+            <h3 class="subsection-title mb-0">1. Shipping Destination</h3>
+            <div class="address-book-selector" v-if="savedAddresses.length > 0">
+              <select v-model="selectedSavedAddress" @change="fillSavedAddress">
+                <option :value="null">-- Use a Saved Address --</option>
+                <option v-for="addr in savedAddresses" :key="addr.id" :value="addr">
+                  {{ addr.name }} ({{ addr.city }})
+                </option>
+              </select>
+            </div>
+          </div>
           <div class="form-body">
             <div class="form-row">
               <div class="form-group flex-1">
@@ -35,12 +45,20 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group position-relative">
               <label for="address">Street Address</label>
               <div class="input-wrapper" :class="{ 'error': errors.address }">
                 <span class="input-icon">🏠</span>
-                <input id="address" v-model="form.address" placeholder="House/Apt No, Street, Landmark" @blur="validateField('address')" />
+                <input id="address" v-model="form.address" placeholder="Start typing your address..." @input="handleAddressInput" @blur="validateField('address')" autocomplete="off" />
               </div>
+              
+              <!-- Mock Auto-complete Dropdown -->
+              <div v-if="showAddressSuggestions && addressSuggestions.length > 0" class="autocomplete-dropdown">
+                <div v-for="(suggestion, idx) in addressSuggestions" :key="idx" class="suggestion-item" @click="selectAddress(suggestion)">
+                  📍 {{ suggestion }}
+                </div>
+              </div>
+              
               <span class="error-text" v-if="errors.address">{{ errors.address }}</span>
             </div>
 
@@ -85,6 +103,14 @@
                 <span class="error-text" v-if="errors.pincode">{{ errors.pincode }}</span>
                 <small class="hint-text" v-if="form.pincode.length >= 6 && deliveryCharge === 0">✨ Local Pincode Detected: Complimentary Shipping Applied</small>
               </div>
+            </div>
+
+            <div class="form-group mt-1" v-if="authStore.isAuthenticated && !selectedSavedAddress">
+              <label class="checkbox-container">
+                <input type="checkbox" v-model="form.save_address" />
+                <span class="checkmark"></span>
+                <span class="checkbox-label" style="font-size: 0.85rem; font-weight: bold; color: var(--primary);">Save this address to my Address Book</span>
+              </label>
             </div>
           </div>
         </section>
@@ -183,10 +209,25 @@
             </div>
           </div>
 
+          <div class="promo-section mt-2">
+            <div class="input-wrapper promo-wrapper">
+              <span class="input-icon">🎟️</span>
+              <input v-model="promoCode" placeholder="Enter Promo Code" :disabled="promoApplied" />
+              <button @click="applyPromo" class="btn-promo" :disabled="!promoCode || promoApplied || loadingPromo">
+                {{ loadingPromo ? '...' : (promoApplied ? 'Applied' : 'Apply') }}
+              </button>
+            </div>
+            <span class="promo-msg" :class="promoError ? 'error-text' : 'success-text'" v-if="promoMessage">{{ promoMessage }}</span>
+          </div>
+
           <div class="summary-totals">
             <div class="summary-row">
               <span>Merchandise Subtotal</span>
-              <span>₹{{ subtotal }}</span>
+              <span>₹{{ subtotal.toFixed(2) }}</span>
+            </div>
+            <div v-if="promoDiscount > 0" class="summary-row highlight-discount">
+              <span>Promo Discount ({{ promoDiscountPercent }}%)</span>
+              <span>-₹{{ promoDiscount.toFixed(2) }}</span>
             </div>
             <div class="summary-row">
               <span>Logistics & Handling</span>
@@ -244,10 +285,30 @@ const successOrder = ref(null)
 // const isDev = import.meta.env.DEV
 const showMockPayment = import.meta.env.DEV || import.meta.env.VITE_ENABLE_MOCK_PAYMENT === 'true';
 
+const promoCode = ref('')
+const promoApplied = ref(false)
+const promoDiscountPercent = ref(0)
+const promoMessage = ref('')
+const promoError = ref(false)
+const loadingPromo = ref(false)
+
+const showAddressSuggestions = ref(false)
+const addressSuggestions = ref([])
+const MOCK_ADDRESSES = [
+  'MG Road, Bangalore, Karnataka',
+  'Connaught Place, New Delhi, Delhi',
+  'Bandra West, Mumbai, Maharashtra',
+  'Residency Road, Srinagar, Jammu & Kashmir',
+  'Lal Chowk, Srinagar, Jammu & Kashmir'
+]
+
 const countries = ['India', 'United States', 'United Kingdom', 'United Arab Emirates', 'Canada', 'Australia']
 const indianStates = [
   'Jammu & Kashmir', 'Delhi', 'Maharashtra', 'Karnataka', 'Punjab', 'Kerala', 'Ladakh'
 ]
+
+const savedAddresses = ref([])
+const selectedSavedAddress = ref(null)
 
 const form = ref({
   name: '',
@@ -272,11 +333,59 @@ const errors = ref({
 })
 
 // Auto-fill from user profile
-onMounted(() => {
+onMounted(async () => {
   if (authStore.isAuthenticated && authStore.user) {
     form.value.name = authStore.user.name || ''
+    
+    // Fetch Saved Addresses
+    try {
+      const res = await axios.get('/api/auth/addresses')
+      savedAddresses.value = res.data
+      
+      const defaultAddr = savedAddresses.value.find(a => a.is_default)
+      if (defaultAddr) {
+        selectedSavedAddress.value = defaultAddr
+        fillSavedAddress()
+      }
+    } catch (err) {
+      console.log('No saved addresses or error fetching')
+    }
   }
 })
+
+const fillSavedAddress = () => {
+  if (!selectedSavedAddress.value) return
+  const a = selectedSavedAddress.value
+  form.value.name = a.name
+  form.value.phone = a.phone
+  form.value.address = a.address_line
+  form.value.city = a.city
+  form.value.state = a.state
+  form.value.country = a.country || 'India'
+  form.value.pincode = a.pincode
+  updateShipping()
+}
+
+const handleAddressInput = () => {
+  if (form.value.address.length > 2) {
+    addressSuggestions.value = MOCK_ADDRESSES.filter(a => a.toLowerCase().includes(form.value.address.toLowerCase()))
+    showAddressSuggestions.value = true
+  } else {
+    showAddressSuggestions.value = false
+  }
+}
+
+const selectAddress = (addr) => {
+  form.value.address = addr
+  
+  // Try to parse mock data into fields
+  const parts = addr.split(', ')
+  if (parts.length >= 3) {
+    form.value.city = parts[1]
+    form.value.state = parts[2]
+  }
+  showAddressSuggestions.value = false
+}
 
 const validateField = (field) => {
   errors.value[field] = ''
@@ -321,6 +430,10 @@ const subtotal = computed(() => {
   return cartStore.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 })
 
+const promoDiscount = computed(() => {
+  return subtotal.value * (promoDiscountPercent.value / 100)
+})
+
 const deliveryCharge = ref(0)
 
 const updateShipping = () => {
@@ -348,7 +461,31 @@ const estimatedDate = computed(() => {
   return `${startDate.toLocaleDateString('en-IN', options)} - ${endDate.toLocaleDateString('en-IN', options)}`
 })
 
-const total = computed(() => subtotal.value + deliveryCharge.value)
+const total = computed(() => Math.max(0, subtotal.value - promoDiscount.value) + deliveryCharge.value)
+
+// Promo Logic
+const applyPromo = async () => {
+  if (!promoCode.value) return
+  loadingPromo.value = true
+  promoMessage.value = ''
+  
+  try {
+    const res = await axios.post('/api/orders/promo/validate', { code: promoCode.value })
+    if (res.data.valid) {
+      promoApplied.value = true
+      promoDiscountPercent.value = res.data.discount_percent
+      promoMessage.value = res.data.message
+      promoError.value = false
+    }
+  } catch (err) {
+    promoError.value = true
+    promoMessage.value = err.response?.data?.message || 'Invalid code'
+    promoApplied.value = false
+    promoDiscountPercent.value = 0
+  } finally {
+    loadingPromo.value = false
+  }
+}
 
 // Partial COD Calculations
 const prepaidAmount = computed(() => {
@@ -380,8 +517,25 @@ const handleCheckout = async () => {
       country: form.value.country,
       pincode: form.value.pincode,
       phone: form.value.phone,
-      payment_mode: form.value.payment_mode
+      payment_mode: form.value.payment_mode,
+      promo_code: promoApplied.value ? promoCode.value : null
     })
+    
+    // Optionally Save Address to Address Book
+    if (authStore.isAuthenticated && form.value.save_address) {
+      try {
+        await axios.post('/api/auth/addresses', {
+          name: form.value.name,
+          phone: form.value.phone,
+          address_line: form.value.address,
+          city: form.value.city,
+          state: form.value.state,
+          country: form.value.country,
+          pincode: form.value.pincode,
+          is_default: true
+        })
+      } catch(e) {}
+    }
 
     const orderData = res.data;
 
@@ -475,6 +629,31 @@ const handleCheckout = async () => {
   margin-bottom: 1.5rem;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 0.75rem;
+}
+
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header-flex .subsection-title {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.address-book-selector select {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--secondary);
+  background: #fdfaf5;
+  color: var(--primary);
+  font-weight: bold;
+  font-size: 0.85rem;
 }
 
 .form-body {
@@ -822,6 +1001,71 @@ const handleCheckout = async () => {
 
 .success-screen { text-align: center; padding: 5rem 2rem; }
 .success-icon { font-size: 5rem; color: #1e7e34; margin-bottom: 2rem; }
+
+.position-relative {
+  position: relative;
+}
+
+.highlight-discount {
+  color: #d00;
+  font-weight: bold;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.suggestion-item:hover {
+  background: #f5f5f5;
+  color: var(--primary);
+}
+
+.promo-wrapper {
+  display: flex;
+}
+
+.btn-promo {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  bottom: 5px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-promo:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.success-text {
+  color: #1e7e34;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: block;
+  margin-top: 5px;
+}
 
 @media (max-width: 1024px) {
   .checkout-grid { grid-template-columns: 1fr; gap: 2rem; }

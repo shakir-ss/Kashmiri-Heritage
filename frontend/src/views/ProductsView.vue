@@ -25,6 +25,15 @@
           :class="{ active: selectedCategory == cat.slug || selectedCategory == cat.id }"
         >{{ cat.name }}</button>
       </div>
+
+      <div class="price-filter mt-4">
+        <h3>Filter by Price</h3>
+        <div class="price-inputs">
+          <input type="number" v-model="minPrice" placeholder="Min ₹" @input="handleSearch" />
+          <span> - </span>
+          <input type="number" v-model="maxPrice" placeholder="Max ₹" @input="handleSearch" />
+        </div>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -73,6 +82,8 @@ const route = useRoute()
 
 const selectedCategory = ref(null)
 const searchQuery = ref('')
+const minPrice = ref(null)
+const maxPrice = ref(null)
 
 const syncFiltersFromRoute = () => {
   const cat = route.query.category || null
@@ -81,7 +92,7 @@ const syncFiltersFromRoute = () => {
   selectedCategory.value = cat
   searchQuery.value = search
   
-  productStore.fetchProducts({ category: cat, search: search })
+  productStore.fetchProducts({ category: cat, search: search, min_price: minPrice.value, max_price: maxPrice.value })
 }
 
 onMounted(async () => {
@@ -96,11 +107,21 @@ watch(() => route.query, () => {
 
 const selectCategory = (slugOrId) => {
   selectedCategory.value = slugOrId
-  productStore.fetchProducts({ category: slugOrId, search: searchQuery.value })
+  handleSearch()
 }
 
+// Debounce timer for search input
+let searchTimeout;
 const handleSearch = () => {
-  productStore.fetchProducts({ category: selectedCategory.value, search: searchQuery.value })
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    productStore.fetchProducts({ 
+      category: selectedCategory.value, 
+      q: searchQuery.value, // using 'q' for fuzzy match as defined in backend
+      min_price: minPrice.value,
+      max_price: maxPrice.value
+    })
+  }, 300) // 300ms debounce
 }
 
 const addToCart = (product) => {
@@ -152,6 +173,26 @@ const addToCart = (product) => {
 .filter-list button.active {
   background: var(--primary);
   color: white;
+}
+
+.price-filter h3 {
+  font-size: 1.1rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price-inputs input {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
 }
 
 .search-bar {

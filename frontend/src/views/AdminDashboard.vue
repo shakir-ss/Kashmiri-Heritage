@@ -25,6 +25,27 @@
       </div>
     </div>
 
+    <!-- Low Stock Alert Dashboard (AG-01) -->
+    <div v-if="lowStockProducts.length > 0" class="low-stock-dashboard card">
+      <h3 class="alert-title">⚠️ Low Stock Alerts</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in lowStockProducts" :key="item.id">
+            <td><strong>{{ item.name }}</strong></td>
+            <td><span class="status-badge" :class="item.stock === 0 ? 'inactive' : 'low-stock'">{{ item.stock }} units left</span></td>
+            <td><button @click="editProduct(item)" class="btn btn-outline btn-sm">Restock</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="insights-row">
       <!-- Popular Items -->
       <div class="insight-table card">
@@ -78,12 +99,20 @@
               <td>{{ formatDate(order.created_at) }}</td>
               <td><strong>₹{{ order.total_amount }}</strong></td>
               <td>
-                <span class="status-badge" :class="order.status">
-                  {{ order.status }}
-                </span>
+                <select @change="updateOrderStatus(order.id, $event.target.value)" :value="order.status" class="status-select" v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sub-admin'">
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="out_for_delivery">Out for Delivery</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <span v-else class="status-badge" :class="order.status">{{ order.status }}</span>
               </td>
-              <td>
-                <button @click="viewOrderDetails(order)" class="btn-text">View Items</button>
+              <td class="actions">
+                <button @click="viewOrderDetails(order)" class="btn-text">View</button>
+                <button v-if="order.balance_on_delivery > 0 && order.amount_collected < order.balance_on_delivery && (authStore.user?.role === 'admin' || authStore.user?.role === 'sub-admin')" 
+                        @click="collectCOD(order)" class="btn-text active">Collect ₹{{ order.balance_on_delivery }}</button>
               </td>
             </tr>
             <tr v-if="orders && orders.length === 0">
@@ -345,23 +374,83 @@
         </form>
       </div>
     </div>
+    <!-- Order Details Modal -->
+    <div v-if="selectedOrder" class="modal-overlay">
+      <div class="modal-content">
+        <div class="section-header">
+          <h2>Order #{{ selectedOrder.id }} Details</h2>
+          <span class="status-badge" :class="selectedOrder.status">{{ selectedOrder.status }}</span>
+        </div>
+        
+        <div class="order-info-grid">
+          <div>
+            <strong>Customer:</strong> {{ selectedOrder.user }}<br/>
+            <small>{{ selectedOrder.user_email }}</small><br/>
+            <strong>Phone:</strong> {{ selectedOrder.phone }}
+          </div>
+          <div>
+            <strong>Shipping Address:</strong><br/>
+            {{ selectedOrder.address }}
+          </div>
+          <div>
+            <strong>Financials:</strong><br/>
+            Total: ₹{{ selectedOrder.total_amount }}<br/>
+            Prepaid: ₹{{ selectedOrder.prepaid_amount }}<br/>
+            COD Balance: ₹{{ selectedOrder.balance_on_delivery }}
+          </div>
+        </div>
+
+        <table class="admin-table mt-2">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in selectedOrder.items" :key="idx">
+              <td>{{ item.name }}</td>
+              <td>₹{{ item.price }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>₹{{ item.price * item.quantity }}</td>
+            </tr>
+            <tr v-if="!selectedOrder.items || selectedOrder.items.length === 0">
+              <td colspan="4">No items found for this order.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="modal-actions mt-3">
+          <button type="button" @click="closeOrderModal" class="btn btn-outline">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useProductStore } from '../stores/productStore'
 import { useAnalyticsStore } from '../stores/analyticsStore'
+import { useAuthStore } from '../stores/authStore'
 import axios from 'axios'
 
 const productStore = useProductStore()
 const analyticsStore = useAnalyticsStore()
+const authStore = useAuthStore()
 const showAddModal = ref(false)
 const showCategoryModal = ref(false)
 const editingId = ref(null)
 const editingCatId = ref(null)
 const orders = ref([])
 const inquiries = ref([])
+const selectedOrder = ref(null)
+
+const lowStockProducts = computed(() => {
+  return productStore.products.filter(p => p.stock <= 5)
+})
 
 const form = ref({
   name: '',
@@ -523,6 +612,26 @@ const fetchOrders = async () => {
   }
 }
 
+const updateOrderStatus = async (id, newStatus) => {
+  try {
+    await axios.put(`/api/orders/${id}/status`, { status: newStatus })
+    await fetchOrders()
+  } catch (err) {
+    alert('Failed to update order status')
+  }
+}
+
+const collectCOD = async (order) => {
+  if (confirm(`Mark ₹${order.balance_on_delivery} as collected for Order #${order.id}?`)) {
+    try {
+      await axios.put(`/api/orders/${order.id}/collect`)
+      await fetchOrders()
+    } catch (err) {
+      alert('Failed to mark as collected')
+    }
+  }
+}
+
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleString('en-IN', {
     day: 'numeric',
@@ -533,8 +642,11 @@ const formatDate = (dateStr) => {
 }
 
 const viewOrderDetails = (order) => {
-  const itemsList = order.items.map(i => `${i.quantity}x ${i.name}`).join('\n')
-  alert(`Order #${order.id} Details:\n\nItems:\n${itemsList}\n\nAddress:\n${order.address}\n\nPhone: ${order.phone}`)
+  selectedOrder.value = order
+}
+
+const closeOrderModal = () => {
+  selectedOrder.value = null
 }
 
 const editProduct = (product) => {
@@ -643,6 +755,19 @@ const closeModal = () => {
 .product-cell-link:hover .product-cell strong {
   color: var(--secondary);
 }
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
 
 .mini-thumb {
   width: 40px;

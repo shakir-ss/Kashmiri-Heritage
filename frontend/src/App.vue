@@ -28,7 +28,54 @@
         <div class="nav-overlay" :class="{ 'active': isMenuOpen }" @click="closeMenu"></div>
 
         <div class="nav-links" :class="{ 'mobile-active': isMenuOpen }">
-          <router-link @click="closeMenu" to="/products">Products</router-link>
+          <!-- Mega Menu Trigger -->
+          <div class="mega-menu-wrapper" @mouseenter="megaOpen = true" @mouseleave="megaOpen = false">
+            <router-link @click="closeMenu" to="/products" class="mega-trigger">Products ▾</router-link>
+            <transition name="mega-fade">
+              <div class="mega-menu" v-if="megaOpen">
+                <div class="mega-inner container">
+                  <div class="mega-search">
+                    <input
+                      v-model="megaSearch"
+                      @input="debounceMegaSearch"
+                      placeholder="Search products…"
+                      @keyup.enter="goToSearch"
+                    />
+                    <div class="mega-suggestions" v-if="megaSuggestions.length">
+                      <router-link
+                        v-for="s in megaSuggestions"
+                        :key="s.id"
+                        :to="`/products/${s.id}`"
+                        class="suggestion-item"
+                        @click="closeMega"
+                      >
+                        <img :src="s.image_url" :alt="s.name" class="suggestion-img" />
+                        <span>{{ s.name }}</span>
+                        <strong>₹{{ s.discount_price || s.price }}</strong>
+                      </router-link>
+                    </div>
+                  </div>
+                  <div class="mega-categories">
+                    <router-link
+                      v-for="cat in categories"
+                      :key="cat.id"
+                      :to="`/products?category=${cat.slug}`"
+                      class="mega-cat-card"
+                      @click="closeMega"
+                    >
+                      <span class="mega-cat-icon">{{ cat.icon || '🌿' }}</span>
+                      <span class="mega-cat-name">{{ cat.name }}</span>
+                    </router-link>
+                    <router-link to="/products" class="mega-cat-card all-link" @click="closeMega">
+                      <span class="mega-cat-icon">🛍️</span>
+                      <span class="mega-cat-name">All Products</span>
+                    </router-link>
+                  </div>
+                </div>
+              </div>
+            </transition>
+          </div>
+          <router-link @click="closeMenu" to="/wholesale">Wholesale</router-link>
           
           <div class="nav-actions">
             <router-link @click="closeMenu" to="/wishlist" class="nav-icon-link" title="Wishlist">
@@ -66,6 +113,7 @@
         <div class="footer-links">
           <h4>Quick Links</h4>
           <router-link to="/products">All Products</router-link>
+          <router-link to="/wholesale">B2B Wholesale</router-link>
           <router-link to="/about">Our Story</router-link>
           <router-link to="/contact">Contact Us</router-link>
         </div>
@@ -105,9 +153,38 @@ const cartStore = useCartStore()
 const router = useRouter()
 const scrolly = ref(0)
 const isMenuOpen = ref(false)
+const megaOpen = ref(false)
+const megaSearch = ref('')
+const megaSuggestions = ref([])
+const categories = ref([])
 
 const closeMenu = () => {
   isMenuOpen.value = false
+}
+
+const closeMega = () => {
+  megaOpen.value = false
+  megaSearch.value = ''
+  megaSuggestions.value = []
+}
+
+let megaTimer;
+const debounceMegaSearch = () => {
+  clearTimeout(megaTimer)
+  if (!megaSearch.value.trim()) { megaSuggestions.value = []; return }
+  megaTimer = setTimeout(async () => {
+    try {
+      const res = await axios.get('/api/products/', { params: { q: megaSearch.value } })
+      megaSuggestions.value = res.data.slice(0, 5)
+    } catch {}
+  }, 250)
+}
+
+const goToSearch = () => {
+  if (megaSearch.value.trim()) {
+    router.push(`/products?search=${encodeURIComponent(megaSearch.value)}`)
+    closeMega()
+  }
 }
 
 // Conditional Analytics for Local Dev

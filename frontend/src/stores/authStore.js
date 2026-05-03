@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { API_URL } from '../config'
+import { useCartStore } from './cartStore'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -35,6 +36,10 @@ export const useAuthStore = defineStore('auth', {
       // CRITICAL: Set the header for all subsequent requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
 
+      // Sync guest cart to backend
+      const cartStore = useCartStore()
+      await cartStore.pushLocalToBackend()
+
       return true
     } catch (err) {
       this.error = err.response?.data?.message || 'Login failed'
@@ -47,7 +52,9 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        await axios.post('/api/auth/register', { name, email, password })
+        const response = await axios.post('/api/auth/register', { name, email, password })
+        // Log them in immediately to sync cart
+        await this.login(email, password)
         return true
       } catch (err) {
         this.error = err.response?.data?.message || 'Registration failed'
