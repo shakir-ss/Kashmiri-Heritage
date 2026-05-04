@@ -4,8 +4,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../backend')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from behave import step, given, when, then
-from app import create_app
-from models import db, User, Category, Product, AbandonedCart, Order, Review, ReviewImage
+from backend.app import create_app
+from backend.models import db, User, Category, Product, AbandonedCart, Order, Review, ReviewImage
 
 app = create_app('dev')
 
